@@ -1,5 +1,5 @@
-#include "s3c24xx.h"
-#include "serial.h"
+#include <s3c24xx.h>
+#include <serial.h>
 
 #define TXD0READY   (1<<2)
 #define RXD0READY   (1)

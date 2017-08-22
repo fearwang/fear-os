@@ -1,16 +1,55 @@
-objs := head.o init.o serial.o main.o
+INCLUDE := -I ./include
+CROSS_COMPILE = /home/fear/work/gcc-3.4.5-glibc-2.3.6/bin/arm-linux-
+AS		= $(CROSS_COMPILE)as
+LD		= $(CROSS_COMPILE)ld
+CC		= $(CROSS_COMPILE)gcc
+CPP		= $(CC) -E
+AR		= $(CROSS_COMPILE)ar
+NM		= $(CROSS_COMPILE)nm
 
-uart.bin: $(objs)
-	arm-linux-ld -Tuart.lds -o uart_elf $^
-	arm-linux-objcopy -O binary -S uart_elf $@
-	arm-linux-objdump -D -m arm uart_elf > uart.dis
-	
-%.o:%.c
-	arm-linux-gcc -Wall -O2 -c -o $@ $<
+STRIP		= $(CROSS_COMPILE)strip
+OBJCOPY		= $(CROSS_COMPILE)objcopy
+OBJDUMP		= $(CROSS_COMPILE)objdump
 
-%.o:%.S
-	arm-linux-gcc -Wall -O2 -c -o $@ $<
+export AS LD CC CPP AR NM
+export STRIP OBJCOPY OBJDUMP
+
+CFLAGS := -Wall -O2 -g
+CFLAGS += -I $(shell pwd)/include
+
+LDFLAGS := -Tlink.lds -nostdlib
+
+export CFLAGS LDFLAGS
+
+TOPDIR := $(shell pwd)
+export TOPDIR
+
+TARGET := fear.bin
+
+
+obj-y += init/
+obj-y += lib/
+obj-y += kernel/
+obj-y += driver/
+
+
+all : 
+	make -C ./ -f $(TOPDIR)/Makefile.build
+	$(LD) $(LDFLAGS) -o fear.elf built-in.o
+	$(OBJCOPY) -O binary -S fear.elf $(TARGET)
+	$(OBJDUMP) -D -m arm fear.elf > fear.dis
+
 
 clean:
-	rm -f uart.bin uart_elf uart.dis *.o		
+	rm -f $(shell find -name "*.o")
+	rm -f $(shell find -name "*.elf")
+	rm -f $(shell find -name "*.dis")
+	rm -f $(TARGET)
+
+distclean:
+	rm -f $(shell find -name "*.o")
+	rm -f $(shell find -name "*.elf")
+	rm -f $(shell find -name "*.dis")
+	rm -f $(shell find -name "*.d")
+	rm -f $(TARGET)
 	

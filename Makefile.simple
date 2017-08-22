@@ -1,0 +1,29 @@
+INCLUDE := -I ./include
+CROSS_COMPILE = /home/fear/work/gcc-3.4.5-glibc-2.3.6/bin/arm-linux-
+AS		= $(CROSS_COMPILE)as
+LD		= $(CROSS_COMPILE)ld -nostdlib
+CC		= $(CROSS_COMPILE)gcc
+CPP		= $(CC) -E
+AR		= $(CROSS_COMPILE)ar
+NM		= $(CROSS_COMPILE)nm
+
+STRIP		= $(CROSS_COMPILE)strip
+OBJCOPY		= $(CROSS_COMPILE)objcopy
+OBJDUMP		= $(CROSS_COMPILE)objdump
+
+objs := init/head.o init/init.o driver/serial/serial.o kernel/main.o lib/string.o
+fear.bin: $(objs)
+	$(LD) $(INCLUDE) -Tlink.lds -o fear_elf $^
+	$(OBJCOPY) -O binary -S fear_elf $@
+	$(OBJDUMP) -D -m arm fear_elf > fear.dis
+	
+%.o:%.c
+	$(CC) $(INCLUDE) -Wall -O2 -c -o $@ $<
+
+init/%.o:init/%.S
+	$(CC) $(INCLUDE) -Wall -O2 -c -o $@ $<
+
+clean:
+	rm -f fear.bin fear_elf fear.dis *.o		
+	rm -f $(shell find -name "*.o")
+	

@@ -2,7 +2,7 @@
  * init.c: 进行一些初始化
  */ 
 
-#include "s3c24xx.h"
+#include <s3c24xx.h>
  
 void disable_watch_dog(void);
 void clock_init(void);
