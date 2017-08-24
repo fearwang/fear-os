@@ -4,7 +4,7 @@
 char *hint  = "fear@jz2440$ ";
 
 
-int main()
+int start_kernel()
 {
     unsigned char c;
     int prev_new_line = 0;

@@ -26,11 +26,12 @@ export TOPDIR
 
 TARGET := fear.bin
 
-
+obj-y += boot/
 obj-y += init/
 obj-y += lib/
 obj-y += kernel/
 obj-y += driver/
+#obj-y += boot/
 
 
 all : 
