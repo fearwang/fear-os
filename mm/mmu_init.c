@@ -21,7 +21,7 @@
 #define MEM_MAP_SIZE				0x4000000   //total size of mem
 
 #define PHYSICAL_IO_ADDR			0x48000000	// start paddr of IO REG
-#define VIRTUAL_IO_ADDR				0x48000000	// va of IO addr we want to map
+#define VIRTUAL_IO_ADDR				0x58000000	// va of IO addr we want to map
 #define IO_MAP_SIZE					0x18000000	// size of io addr to map
 
 void start_mmu(void){

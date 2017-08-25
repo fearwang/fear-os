@@ -1,5 +1,6 @@
 #include <s3c24xx.h>
 #include <serial.h>
+#include <ioremap.h>
 
 #define TXD0READY   (1<<2)
 #define RXD0READY   (1)
@@ -8,6 +9,18 @@
 #define UART_CLK        PCLK        //  UART0的时钟源设为PCLK
 #define UART_BAUD_RATE  115200      // 波特率
 #define UART_BRD        ((UART_CLK  / (UART_BAUD_RATE * 16)) - 1)
+
+
+
+/*UART registers*/
+#define ULCON0_REG_ADDR              (0x50000000)
+#define UCON0_REG_ADDR               (0x50000004)
+#define UFCON0_REG_ADDR              (0x50000008)
+#define UMCON0_REG_ADDR              (0x5000000c)
+#define UTRSTAT0_REG_ADDR            (0x50000010)
+#define UTXH0_REG_ADDR               (0x50000020)
+#define URXH0_REG_ADDR               (0x50000024)
+#define UBRDIV0_REG_ADDR             (0x50000028)
 
 /*
  * 初始化UART0
@@ -30,12 +43,32 @@ void uart0_init(void)
  */
 void putc(unsigned char c)
 {
+
     /* 等待，直到发送缓冲区中的数据已经全部发送出去 */
     while (!(UTRSTAT0 & TXD0READY));
     
+
     /* 向UTXH0寄存器中写入数据，UART即自动将它发送出去 */
     UTXH0 = c;
 }
+
+
+void putc_mmu(unsigned char c)
+{
+    volatile unsigned char * utxh0_ptr = (volatile unsigned char *)ioremap(UTXH0_REG_ADDR, 0, 0);
+    volatile unsigned long * utrstat0_ptr = (volatile unsigned long *)ioremap(UTRSTAT0_REG_ADDR, 0, 0);
+
+    /* 等待，直到发送缓冲区中的数据已经全部发送出去 */
+//    while (!(UTRSTAT0 & TXD0READY));
+    while( !((*utrstat0_ptr) & TXD0READY) )
+           ;
+    
+    *utxh0_ptr = c;
+
+    /* 向UTXH0寄存器中写入数据，UART即自动将它发送出去 */
+}
+
+
 
 /*
  * 接收字符
@@ -47,6 +80,20 @@ unsigned char getc(void)
     
     /* 直接读取URXH0寄存器，即可获得接收到的数据 */
     return URXH0;
+}
+
+
+
+unsigned char getc_mmu(void)
+{
+    volatile unsigned char * urxh0_ptr = (volatile unsigned char *)ioremap(URXH0_REG_ADDR, 0, 0);
+    volatile unsigned long * utrstat0_ptr = (volatile unsigned long *)ioremap(UTRSTAT0_REG_ADDR, 0, 0);
+    /* 等待，直到接收缓冲区中的有数据 */
+    while( !((*utrstat0_ptr) & RXD0READY) );
+    //while (!(UTRSTAT0 & RXD0READY));
+    
+    /* 直接读取URXH0寄存器，即可获得接收到的数据 */
+    return *urxh0_ptr;
 }
 
 /*
