@@ -4,16 +4,20 @@ ENTRY(_start)
 SECTIONS
 {
 	. = 0x30000000;
+    __ro_start__ = .;
 	.text : 
 	{
 		*(.text)
 	}
-	. = ALIGN(32);
-										
+    __ro_end__ = .;
+
+	. = ALIGN(32);						
+    __rw_start__ = .;
 	.data : 
 	{
 		*(.data)
 	}
+    __rw_end__ = .;
 
 	. = ALIGN(32);
 	__bss_start__	= .;
