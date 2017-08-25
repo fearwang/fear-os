@@ -17,7 +17,7 @@ export STRIP OBJCOPY OBJDUMP
 CFLAGS := -Wall -O2 -g
 CFLAGS += -I $(shell pwd)/include
 
-LDFLAGS := -Tlink.lds -nostdlib
+LDFLAGS := -Tlink.lds -nostdlib -L /home/fear/work/gcc-3.4.5-glibc-2.3.6/lib/gcc/arm-linux/3.4.5/
 
 export CFLAGS LDFLAGS
 
@@ -31,12 +31,12 @@ obj-y += init/
 obj-y += lib/
 obj-y += kernel/
 obj-y += driver/
-#obj-y += boot/
+obj-y += mm/
 
 
 all : 
 	make -C ./ -f $(TOPDIR)/Makefile.build
-	$(LD) $(LDFLAGS) -o fear.elf built-in.o
+	$(LD) $(LDFLAGS) -o fear.elf built-in.o 
 	$(OBJCOPY) -O binary -S fear.elf $(TARGET)
 	$(OBJDUMP) -D -m arm fear.elf > fear.dis
 

@@ -2,6 +2,7 @@
 #include <string.h>
 
 char *hint  = "fear@jz2440$ ";
+char *lable  = "Fear OS !!!\n\r";
 
 
 int start_kernel()
@@ -14,9 +15,15 @@ int start_kernel()
     putc('\r');
     int i = 0;
     for(i = 0; i < strlen(hint); i++) {
-        putc(*(hint+i));
+        putc(*(lable+i));
     }
 
+   init_sys_mmu();
+   start_mmu();
+
+    for(i = 0; i < strlen(hint); i++) {
+        putc(*(hint+i));
+    }
     while(1)
     {
         // 从串口接收数据后，判断其是否数字或子母，若是则加1后输出
