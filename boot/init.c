@@ -96,3 +96,18 @@ void copy_steppingstone_to_sdram(void)
         pdwSrc++;
     }
 }
+
+extern __ro_start__;
+extern __rw_end__;
+
+void relocate_img_to_dram()
+{
+    unsigned char *dst = (unsigned char*)0x30000000;
+    unsigned long  src_flash= 0x0;
+    //int size = __rw_end__ - __ro_start__;
+    int size = 4096;
+    nand_read(dst, src_flash, size);
+
+}
+
+
