@@ -17,7 +17,6 @@ void disable_watch_dog(void)
     WTCON = 0;  // 关闭WATCHDOG很简单，往这个寄存器写0即可
 }
 
-#define S3C2410_MPLL_200MHZ     ((0x5c<<12)|(0x04<<4)|(0x00))
 #define S3C2440_MPLL_200MHZ     ((0x5c<<12)|(0x01<<4)|(0x02))
 /*
  * 对于MPLLCON寄存器，[19:12]为MDIV，[9:4]为PDIV，[1:0]为SDIV
@@ -41,15 +40,7 @@ __asm__(
     "mcr    p15, 0, r1, c1, c0, 0\n"        /* 写入控制寄存器 */
     );
 
-    /* 判断是S3C2410还是S3C2440 */
-    if ((GSTATUS1 == 0x32410000) || (GSTATUS1 == 0x32410002))
-    {
-        MPLLCON = S3C2410_MPLL_200MHZ;  /* 现在，FCLK=200MHz,HCLK=100MHz,PCLK=50MHz */
-    }
-    else
-    {
-        MPLLCON = S3C2440_MPLL_200MHZ;  /* 现在，FCLK=200MHz,HCLK=100MHz,PCLK=50MHz */
-    }       
+    MPLLCON = S3C2440_MPLL_200MHZ;  /* 现在，FCLK=200MHz,HCLK=100MHz,PCLK=50MHz */
 }
 
 /*
@@ -86,10 +77,10 @@ void memsetup(void)
 
 void copy_steppingstone_to_sdram(void)
 {
-    unsigned int *pdwSrc  = (unsigned int *)0;
-    unsigned int *pdwDest = (unsigned int *)0x30000000;
+    unsigned char *pdwSrc  = (unsigned char *)0;
+    unsigned char *pdwDest = (unsigned char *)0x30000000;
     
-    while (pdwSrc < (unsigned int *)4096)
+    while (pdwSrc < (unsigned char *)4096)
     {
         *pdwDest = *pdwSrc;
         pdwDest++;
@@ -106,8 +97,62 @@ void relocate_img_to_dram()
     unsigned long  src_flash= 0x0;
     //int size = __rw_end__ - __ro_start__;
     int size = 4096;
-    nand_read(dst, src_flash, size);
+//    nand_read(dst, src_flash, size);
 
+}
+
+void puts_hello()
+{
+    puts("hello\r\n");
+
+}
+
+void compare_dram_and_sram_4k()
+{
+   unsigned  short i = 0;
+    unsigned char *src = (unsigned char *)0;
+    unsigned char *dst = (unsigned char *)0x30000000;
+
+    for(i = 0; i < 4096; i++) {
+        if(*src != *dst)
+            break;
+        src++;
+        dst++;
+    }
+
+    int b1, b2, b3, b4;
+    b1 = (i&0xf000) >> 12;
+    if(b1 > 9)
+        b1 += 0x41-10;
+    else
+        b1 += 0x30;
+    b2 = (i&0x0f00) >> 8;
+    if(b2 > 9)
+        b2 += 0x41-10;
+    else
+        b2 += 0x30;
+    b3 = (i&0x00f0) >> 4;
+    if(b3 > 9)
+        b3 += 0x41-10;
+    else
+        b3 += 0x30;
+    b4 = (i&0x000f) >> 0;
+    if(b4 > 9)
+        b4 += 0x41-10;
+    else
+        b4 += 0x30;
+    puts("\r\ni=0x");
+    putc(b1);
+    putc(b2);
+    putc(b3);
+    putc(b4);
+
+
+    if(i == 4096) {
+        puts("rel ok\r\n");
+    } else {
+        puts("rel fail\r\n");
+    }
 }
 
 

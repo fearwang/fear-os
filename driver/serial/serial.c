@@ -119,3 +119,89 @@ int isLetter(unsigned char c)
     else
         return 0;
 }
+
+void puts(char *str)
+{
+	int i = 0;
+	while (str[i])
+	{
+		putc(str[i]);
+		i++;
+	}
+}
+
+void puthex(unsigned int val)
+{
+	/* 0x1234abcd */
+	int i;
+	int j;
+	
+	puts("0x");
+
+	for (i = 0; i < 8; i++)
+	{
+		j = (val >> ((7-i)*4)) & 0xf;
+		if ((j >= 0) && (j <= 9))
+			putc('0' + j);
+		else
+			putc('A' + j - 0xa);
+		
+	}
+	
+}
+
+void put_1()
+{
+	
+	putc('\r');
+	putc('\n');
+	putc('1');
+}
+
+void put_2()
+{
+	
+	putc('\r');
+	putc('\n');
+	putc('2');
+}
+
+void put_3()
+{
+	
+	putc('\r');
+	putc('\n');
+	putc('3');
+}
+
+void put_4()
+{
+	
+	putc('\r');
+	putc('\n');
+	putc('4');
+}
+
+void put_5()
+{
+	
+	putc('\r');
+	putc('\n');
+	putc('5');
+}
+
+void put_6()
+{
+	
+	putc('\r');
+	putc('\n');
+	putc('6');
+}
+
+void put_7()
+{
+	
+	putc('\r');
+	putc('\n');
+	putc('7');
+}
