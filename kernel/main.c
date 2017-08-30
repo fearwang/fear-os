@@ -1,8 +1,9 @@
 #include <serial.h>
 #include <string.h>
+#include <stdio.h>
 
 char *hint  = "fear@jz2440$ ";
-char *lable  = "Fear OS !!!\n\r";
+char *label  = "\n\rFear OS !!!\n\r";
 
 
 int start_kernel()
@@ -10,17 +11,14 @@ int start_kernel()
     unsigned char c;
     int prev_new_line = 0;
     uart0_init();   // 波特率115200，8N1(8个数据位，无校验位，1个停止位)
+
+    puts(label);
+    printk("using printk:%s", label);
+
+    init_sys_mmu();
+    start_mmu();
     
-    putc('\n');
-    putc('\r');
     int i = 0;
-    for(i = 0; i < strlen(hint); i++) {
-        putc(*(lable+i));
-    }
-
-   init_sys_mmu();
-   start_mmu();
-
     for(i = 0; i < strlen(hint); i++) {
         putc_mmu(*(hint+i));
     }

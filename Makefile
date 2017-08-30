@@ -36,7 +36,7 @@ obj-y += mm/
 
 all : 
 	make -C ./ -f $(TOPDIR)/Makefile.build
-	$(LD) $(LDFLAGS) -o fear.elf built-in.o 
+	$(LD) $(LDFLAGS) -o fear.elf built-in.o -lgcc 
 	$(OBJCOPY) -O binary -S fear.elf $(TARGET)
 	$(OBJDUMP) -D -m arm fear.elf > fear.dis
 

@@ -1,2 +1,2 @@
 obj-y += string.o
-#obj-y += print.o
+obj-y += print.o

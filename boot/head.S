@@ -21,7 +21,7 @@ Reset:
 
 #    bl copy_steppingstone_to_sdram
     bl relocate_img_to_dram
-    bl compare_dram_and_sram_4k
+#    bl compare_dram_and_sram_4k
     ldr pc, =on_sdram
 on_sdram:
     ldr lr, =halt_loop
@@ -30,4 +30,4 @@ on_sdram:
 halt_loop:
     b halt_loop
 
-_boot_bss_start_:.word __bss_start__
+_boot_bss_start_:.word __rodata_end__

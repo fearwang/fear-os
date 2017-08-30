@@ -19,12 +19,12 @@ SECTIONS
 	}
     __rw_end__ = .;
 
-
+    __rodata_start__ = .;
 	.rodata : 
 	{
 		*(.rodata*)
 	}
-
+    __rodata_end__ = .;
 
 	. = ALIGN(32);
 	__bss_start__	= .;
