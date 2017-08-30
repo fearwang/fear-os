@@ -11,15 +11,16 @@ Reset:
 
     bl nand_init
     bl uart0_init
-    bl puts_hello
+#    bl puts_hello
 
-   // mov r0, #0
-//    ldr r1, =0x30000000
- //   ldr r2, = __bss_start__
- //   sub r2, r2, r1
-  //  bl copy_code_to_sdram
+    mov r0, #0
+    ldr r1, =0x30000000
+#    mov r2, #4096
+   ldr r2, _boot_bss_start_
+    sub r2, r2, r1
 
-    bl copy_steppingstone_to_sdram
+#    bl copy_steppingstone_to_sdram
+    bl relocate_img_to_dram
     bl compare_dram_and_sram_4k
     ldr pc, =on_sdram
 on_sdram:
@@ -29,3 +30,4 @@ on_sdram:
 halt_loop:
     b halt_loop
 
+_boot_bss_start_:.word __bss_start__

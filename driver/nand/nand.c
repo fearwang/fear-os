@@ -89,7 +89,6 @@ void nand_read(unsigned int addr, unsigned char *buf, unsigned int len)
 {
 	int col = addr % 2048;
 	int i = 0;
-		
 	/* 1. 选中 */
 	nand_select();
 
@@ -117,7 +116,6 @@ void nand_read(unsigned int addr, unsigned char *buf, unsigned int len)
 		
 		col = 0;
 	}
-
 	/* 7. 取消选中 */		
 	nand_deselect();
 }

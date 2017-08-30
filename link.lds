@@ -19,6 +19,13 @@ SECTIONS
 	}
     __rw_end__ = .;
 
+
+	.rodata : 
+	{
+		*(.rodata*)
+	}
+
+
 	. = ALIGN(32);
 	__bss_start__	= .;
 	.bss : 

@@ -88,28 +88,37 @@ void copy_steppingstone_to_sdram(void)
     }
 }
 
-extern __ro_start__;
-extern __rw_end__;
-
-void relocate_img_to_dram()
+print_relocate_length(unsigned int len)
 {
-    unsigned char *dst = (unsigned char*)0x30000000;
-    unsigned long  src_flash= 0x0;
-    //int size = __rw_end__ - __ro_start__;
-    int size = 4096;
-//    nand_read(dst, src_flash, size);
-
+    puts("relocate length=");
+    puthex(len);
 }
 
+
+extern __ro_start__;
+extern __rw_end__;
+extern __bss_start__;
+
+void relocate_img_to_dram(unsigned char *src, unsigned char *dst, unsigned int len)
+{
+    //unsigned char *dst = (unsigned char*)0x30000000;
+    //unsigned long  src_flash= 0x0;
+    //int size = __rw_end__ - __ro_start__;
+    //int size = 8192;
+    print_relocate_length(len);
+    nand_read(src, dst, len);
+
+}
+/*
 void puts_hello()
 {
     puts("hello\r\n");
 
-}
+}*/
 
 void compare_dram_and_sram_4k()
 {
-   unsigned  short i = 0;
+    unsigned  short i = 0;
     unsigned char *src = (unsigned char *)0;
     unsigned char *dst = (unsigned char *)0x30000000;
 
@@ -146,6 +155,7 @@ void compare_dram_and_sram_4k()
     putc(b2);
     putc(b3);
     putc(b4);
+    puts("->");
 
 
     if(i == 4096) {
