@@ -19,6 +19,12 @@ device nand0 <nandflash0>, # parts = 4
     ldr sp, =4096
     bl disable_watch_dog
     bl clock_init
+    
+    //enable icache
+    mrc p15, 0, r0, c1, c0, 0   // read control reg
+    orr r0, r0, #(1<<12)
+    mcr p15, 0, r0, c1, c0, 0   // write it back
+
     bl memsetup
     ldr sp, =0x34000000
 
