@@ -17,7 +17,7 @@
 #define L1_PTR_BASE_ADDR			0x33700000	
 
 #define PHYSICAL_MEM_ADDR			0x30000000 //start of paddr in jz2440
-#define VIRTUAL_MEM_ADDR			0x30000000 //now we make va = pa
+#define VIRTUAL_MEM_ADDR			0x00000000 //now we make va = pa
 #define MEM_MAP_SIZE				0x4000000   //total size of mem
 
 #define PHYSICAL_IO_ADDR			0x48000000	// start paddr of IO REG

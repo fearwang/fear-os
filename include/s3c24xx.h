@@ -72,4 +72,8 @@
 #define	TCMPB0		(*(volatile unsigned long *)0x51000010)
 #define	TCNTO0		(*(volatile unsigned long *)0x51000014)
 
+#define	TCNTB4		(*(volatile unsigned long *)0x5100003c)
+#define	TCNTO4		(*(volatile unsigned long *)0x51000040)
+
+
 #define GSTATUS1    (*(volatile unsigned long *)0x560000B0)
