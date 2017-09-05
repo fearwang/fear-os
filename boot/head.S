@@ -30,10 +30,9 @@ device nand0 <nandflash0>, # parts = 4
 
     bl nand_init_boot
     bl uart0_init_boot
-
     //relocate boot itself to 0x30000000
     mov r0, #0          //src
-    ldr r1, =0x30000000 //dst
+    ldr r1, =0x33000000 //dst
     ldr r2, _boot_bss_start_
     sub r2, r2, r1     //len
 
@@ -57,4 +56,4 @@ halt_loop:
 _boot_bss_start_:.word __rodata_end__
 _kernel_offset_nand:.word 0x00060000
 _kernel_size_nand:.word 0x00200000
-_kernel_entry_addr:.word 0x30040000
+_kernel_entry_addr:.word 0x30000000

@@ -3,7 +3,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-	. = 0x30040000;
+	. = 0x30000000;
     __ro_start__ = .;
 	.text : 
 	{

@@ -103,11 +103,8 @@ void print_relocate_length(unsigned int len)
 
 void relocate_img_to_dram(unsigned char *src, unsigned char *dst, unsigned int len)
 {
-    //unsigned char *dst = (unsigned char*)0x30000000;
-    //unsigned long  src_flash= 0x0;
-    //int size = __rw_end__ - __ro_start__;
-    //int size = 8192;
-    print_relocate_length(len);
+    //BUG FIX : loacl string also store with link addr, so before we jump to the link addr , we must not use strimgs 
+//    print_relocate_length(len);
     nand_read_boot(src, dst, len);
 
 }
