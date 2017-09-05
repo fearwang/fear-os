@@ -36,12 +36,19 @@ device nand0 <nandflash0>, # parts = 4
 #    bl compare_dram_and_sram_4k
     ldr pc, =on_sdram
 on_sdram:
-    bl .
+    //copy kernel from flash and jump to it entry (0x30040000)
+    ldr r0, _kernel_offset_nand //src
+    ldr r1, _kernel_entry_addr  //dst
+    ldr r2, _kernel_size_nand   //len
+    bl copy_kernel_from_nand
+    ldr pc, _kernel_entry_addr 
     ldr lr, =halt_loop 
-    //copy kernel from flash and jump to it entry (0x30008000)
-//    ldr pc, =_start
+    
 
 halt_loop:
     b halt_loop
 
 _boot_bss_start_:.word __rodata_end__
+_kernel_offset_nand:.word 0x00060000
+_kernel_size_nand:.word 0x00200000
+_kernel_entry_addr:.word 0x30040000

@@ -41,6 +41,7 @@ all : boot kernel
 boot :
 	@echo "start build boot..."
 	make -C boot/
+	@echo "boot build successful!!"
 
 kernel : 
 	@echo "start build kernel..."
@@ -54,6 +55,7 @@ clean:
 	rm -f $(shell find -name "*.o")
 	rm -f $(shell find -name "*.elf")
 	rm -f $(shell find -name "*.dis")
+	make -C boot/ clean
 	rm -f $(TARGET)
 	rm -f $(BOOT)
 
@@ -63,6 +65,7 @@ distclean:
 	rm -f $(shell find -name "*.dis")
 	rm -f $(shell find -name "*.d")
 	rm -f $(TARGET)
+	make -C boot/ clean
 	rm -f $(BOOT)
 	
 .PHONY : $(PHONY)

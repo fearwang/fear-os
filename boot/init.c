@@ -91,8 +91,9 @@ void copy_steppingstone_to_sdram(void)
 
 void print_relocate_length(unsigned int len)
 {
-    puts_boot("relocate length=");
+    puts_boot("\n\rrelocate length=");
     puthex_boot(len);
+    puts_boot("\n\r");
 }
 
 
@@ -110,6 +111,19 @@ void relocate_img_to_dram(unsigned char *src, unsigned char *dst, unsigned int l
     nand_read_boot(src, dst, len);
 
 }
+
+
+void copy_kernel_from_nand(unsigned char *src, unsigned char *dst, unsigned int len)
+{
+    //unsigned char *dst = (unsigned char*)0x30000000;
+    //unsigned long  src_flash= 0x0;
+    //int size = __rw_end__ - __ro_start__;
+    //int size = 8192;
+    print_relocate_length(len);
+    nand_read_boot(src, dst, len);
+
+}
+
 /*
 void puts_hello()
 {
