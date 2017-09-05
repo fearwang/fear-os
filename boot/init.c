@@ -2,7 +2,8 @@
  * init.c: 进行一些初始化
  */ 
 
-#include <s3c24xx.h>
+#include "s3c24xx.h"
+#include "serial.h"
  
 void disable_watch_dog(void);
 void clock_init(void);
@@ -88,16 +89,16 @@ void copy_steppingstone_to_sdram(void)
     }
 }
 
-print_relocate_length(unsigned int len)
+void print_relocate_length(unsigned int len)
 {
-    puts("relocate length=");
-    puthex(len);
+    puts_boot("relocate length=");
+    puthex_boot(len);
 }
 
 
-extern __ro_start__;
-extern __rw_end__;
-extern __bss_start__;
+//extern __ro_start__;
+//extern __rw_end__;
+//extern __bss_start__;
 
 void relocate_img_to_dram(unsigned char *src, unsigned char *dst, unsigned int len)
 {
@@ -106,7 +107,7 @@ void relocate_img_to_dram(unsigned char *src, unsigned char *dst, unsigned int l
     //int size = __rw_end__ - __ro_start__;
     //int size = 8192;
     print_relocate_length(len);
-    nand_read(src, dst, len);
+    nand_read_boot(src, dst, len);
 
 }
 /*
@@ -150,18 +151,18 @@ void compare_dram_and_sram_4k()
         b4 += 0x41-10;
     else
         b4 += 0x30;
-    puts("\r\ni=0x");
-    putc(b1);
-    putc(b2);
-    putc(b3);
-    putc(b4);
-    puts("->");
+    puts_boot("\r\ni=0x");
+    putc_boot(b1);
+    putc_boot(b2);
+    putc_boot(b3);
+    putc_boot(b4);
+    puts_boot("->");
 
 
     if(i == 4096) {
-        puts("rel ok\r\n");
+        puts_boot("rel ok\r\n");
     } else {
-        puts("rel fail\r\n");
+        puts_boot("rel fail\r\n");
     }
 }
 

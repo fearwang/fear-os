@@ -24,6 +24,9 @@
 #define VIRTUAL_IO_ADDR				0x48000000	// va of IO addr we want to map
 #define IO_MAP_SIZE					0x18000000	// size of io addr to map
 
+#define VIRTUAL_VECTOR_ADDR 0x0             // start va of vector table
+#define PHYSICAL_VECTOR_ADDR 0x30000000     //start pa of vector table
+
 void start_mmu(void){
 	unsigned int ttb=L1_PTR_BASE_ADDR;
 

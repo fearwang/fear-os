@@ -25,16 +25,25 @@ TOPDIR := $(shell pwd)
 export TOPDIR
 
 TARGET := fear.bin
+BOOT := init.bin
 
-obj-y += boot/
 obj-y += init/
 obj-y += lib/
 obj-y += kernel/
 obj-y += driver/
 obj-y += mm/
 
+PHONY := all boot kernel
 
-all : 
+all : boot kernel
+	@echo "build successful!!"
+
+boot :
+	@echo "start build boot..."
+	make -C boot/
+
+kernel : 
+	@echo "start build kernel..."
 	make -C ./ -f $(TOPDIR)/Makefile.build
 	$(LD) $(LDFLAGS) -o fear.elf built-in.o -lgcc 
 	$(OBJCOPY) -O binary -S fear.elf $(TARGET)
@@ -46,6 +55,7 @@ clean:
 	rm -f $(shell find -name "*.elf")
 	rm -f $(shell find -name "*.dis")
 	rm -f $(TARGET)
+	rm -f $(BOOT)
 
 distclean:
 	rm -f $(shell find -name "*.o")
@@ -53,4 +63,6 @@ distclean:
 	rm -f $(shell find -name "*.dis")
 	rm -f $(shell find -name "*.d")
 	rm -f $(TARGET)
+	rm -f $(BOOT)
 	
+.PHONY : $(PHONY)
