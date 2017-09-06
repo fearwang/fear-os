@@ -10,12 +10,13 @@ extern void umask_int(unsigned int offset);
 
 void timer_init(void){
 
-	TCFG0|=0x800;
+	TCFG0|=0xFE00;
+	TCFG1|=0x1000;
 	TCON&=(~(7<<20));
 	TCON|=(1<<22);
 	TCON|=(1<<21);
 
-	TCNTB4=1000000;
+	TCNTB4=50000;
 
 	TCON|=(1<<20);
 	TCON&=~(1<<21);

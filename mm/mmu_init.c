@@ -17,7 +17,7 @@
 #define L1_PTR_BASE_ADDR			0x33700000	
 
 #define PHYSICAL_MEM_ADDR			0x30000000 //start of paddr in jz2440
-#define VIRTUAL_MEM_ADDR			0x00000000 //now we make va = pa
+#define VIRTUAL_MEM_ADDR			0x30000000 //now we make va = pa
 #define MEM_MAP_SIZE				0x4000000   //total size of mem
 
 #define PHYSICAL_IO_ADDR			0x48000000	// start paddr of IO REG
@@ -26,6 +26,7 @@
 
 #define VIRTUAL_VECTOR_ADDR 0x0             // start va of vector table
 #define PHYSICAL_VECTOR_ADDR 0x30000000     //start pa of vector table
+#define VECTOR_MAP_SIZE 0x100000
 
 void start_mmu(void){
 	unsigned int ttb=L1_PTR_BASE_ADDR;
@@ -44,6 +45,7 @@ void start_mmu(void){
 		: "r" (ttb)
 		:"r0"
 	);
+    printk("end of start mmu\n\r");
 }
 
 unsigned int gen_l1_pte(unsigned int paddr){
@@ -63,6 +65,16 @@ void init_sys_mmu(void){
 	unsigned int pte;
 	unsigned int pte_addr;
 	int j;
+    //map first 1M space of kernel img  to 0x00000000
+	for(j = 0;j < VECTOR_MAP_SIZE>>20; j++){
+		pte=gen_l1_pte(PHYSICAL_VECTOR_ADDR+(j<<20)); //every 1M space from 0x30000000
+		pte|=PTE_ALL_AP_L1_SECTION_DEFAULT;
+		pte|=PTE_L1_SECTION_NO_CACHE_AND_WB;
+		pte|=PTE_L1_SECTION_DOMAIN_DEFAULT;
+		pte_addr=gen_l1_pte_addr(L1_PTR_BASE_ADDR,\
+								VIRTUAL_VECTOR_ADDR+(j<<20));
+		*(volatile unsigned int *)pte_addr=pte;
+	}
 
 	for(j = 0;j < MEM_MAP_SIZE>>20; j++){
 		pte=gen_l1_pte(PHYSICAL_MEM_ADDR+(j<<20)); //every 1M space from 0x30000000
@@ -73,6 +85,7 @@ void init_sys_mmu(void){
 								VIRTUAL_MEM_ADDR+(j<<20));
 		*(volatile unsigned int *)pte_addr=pte;
 	}
+
 	for(j = 0;j < IO_MAP_SIZE>>20; j++){
 		pte=gen_l1_pte(PHYSICAL_IO_ADDR+(j<<20));
 		pte|=PTE_ALL_AP_L1_SECTION_DEFAULT;
@@ -82,4 +95,5 @@ void init_sys_mmu(void){
 								VIRTUAL_IO_ADDR+(j<<20));
 		*(volatile unsigned int *)pte_addr=pte;
 	}
+    printk("endof init_sys_mmu\n\r");
 }
