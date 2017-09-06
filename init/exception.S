@@ -1,4 +1,24 @@
 
+.equ DISABLE_IRQ,0x80
+.equ DISABLE_FIQ,0x40
+.equ SYS_MOD,0x1f
+.equ IRQ_MOD,0x12
+.equ FIQ_MOD,0x11
+.equ SVC_MOD,0x13
+.equ ABT_MOD,0x17
+.equ UND_MOD,0x1b
+.equ MOD_MASK,0x1f
+
+
+.macro CHANGE_TO_SVC
+    msr     cpsr_c,#(DISABLE_FIQ|DISABLE_IRQ|SVC_MOD)
+.endm
+
+.macro CHANGE_TO_IRQ
+    msr     cpsr_c,#(DISABLE_FIQ|DISABLE_IRQ|IRQ_MOD)
+.endm
+
+
 .global	__vector_undefined
 .global	__vector_swi
 .global	__vector_prefetch_abort
@@ -20,11 +40,20 @@ __vector_data_abort:
 	nop
 __vector_reserved:
 	nop
-__vector_irq:
-    sub r14, r14, #4
-    stmfd r13!, {r0-r3,r14}
-    bl common_irq_handler
-    ldmfd r13!, {r0-r3,pc}^
+__vector_irq:	
+	sub r14,r14,#4	 	//计算上一个状态的返回地址
+	stmfd r13!,{r14}	//并将其保存
+	mrs r14,spsr		//spsr_irq保存到r14中
+	stmfd r13!,{r14}	//压栈，即将上一个状态的cpsr保存起来 即使再发生中断 lr和cpsr都不会被破坏
+	CHANGE_TO_SVC			
+	stmfd r13!,{r0-r3}	//r0-r3保存在svc模式下的 堆栈中
+	bl common_irq_handler
+	ldmfd r13!,{r0-r3}	//从svc堆栈中 弹出r0-r3
+	CHANGE_TO_IRQ		//返回irq模式
+	ldmfd r13!,{r14}	//弹出lr和spsr
+	msr spsr,r14
+	ldmfd r13!,{pc}^
+	
 __vector_fiq:
 	nop
 

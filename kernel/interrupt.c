@@ -27,9 +27,9 @@ void common_irq_handler(void){
 	printk("%d\t",INTOFFSET);
 	SRCPND|=tmp;
 	INTPND|=tmp;
-	//enable_irq();
+	enable_irq();
 	printk("interrupt occured\n\r");
-	//disable_irq();
+	disable_irq();
 }
 
 
