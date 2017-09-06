@@ -1,1 +1,0 @@
-ioremap.o: ioremap.c

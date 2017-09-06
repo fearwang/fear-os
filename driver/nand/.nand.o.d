@@ -1,1 +1,0 @@
-nand.o: nand.c
