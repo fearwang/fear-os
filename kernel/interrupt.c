@@ -29,7 +29,7 @@ void common_irq_handler(void){
 	INTPND|=tmp;
 	enable_irq();
 	printk("interrupt occured\n\r");
-	disable_irq();
+	//disable_irq();
 }
 
 
