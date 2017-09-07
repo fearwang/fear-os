@@ -48,9 +48,12 @@ __vector_irq:
 	str r0,[r13,#-0xc]		//在irq模式的堆栈中保存r0
 	mov r0,r13				//使用r0保存r13的值给svc模式  svc模式从中取得lr 和spsr_irq
 	CHANGE_TO_SVC		
-	str r14,[r13,#-0x8]!	//同样是保存r14_svc
+	str r14,[r13,#-0x8]  	//同样是保存r14_svc
 	ldr r14,[r0,#-0x4]		//设置r14_svc为r0传递过来的值 即r13_irq
 	str r14,[r13,#-0x4]		//从r13_irq回复出上一个状态的返回地址
+
+    sub r13,r13,#0x8
+
 	ldr r14,[r0,#-0x8]
 	ldr r0,[r0,#-0xc]
 	stmdb r13!,{r0-r3,r14}
