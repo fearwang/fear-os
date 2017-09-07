@@ -59,6 +59,8 @@ static char print_buf[1024];
 
 void __put_char(char *p,int num){
 	while(*p&&num--){
+		if(*p == '\n')
+			putc('\r');
 		putc(*p++);
 	};
 }

@@ -1,18 +1,4 @@
-
-
-
-
-
-/*
- *  物理地址空间: 0x30000000-0x34000000
- *  每个特权模式流出1M作为堆栈 在内存末尾留出 
- *	
- *
- *
- *
- */
-
-
+#include <mem_layout.h>
 
 #define	NULL	((void *)0)
 
@@ -104,8 +90,8 @@ static inline int list_empty(const struct list_head *head)
 
 
 
-#define _MEM_END	0x30700000
-#define _MEM_START	0x300f0000
+#define _MEM_END	PAGE_TABLE_BASE_ADDR
+#define _MEM_START	PLAT_MEM_START + KERNEL_IMG_MAX_SIZE
 
 
 #define PAGE_SHIFT	(12)
@@ -114,7 +100,7 @@ static inline int list_empty(const struct list_head *head)
 
 #define KERNEL_MEM_END	(_MEM_END)
 /*the bigin and end of the kernel mem which is needed to be paged.*/
-#define KERNEL_PAGING_START	((_MEM_START+(~PAGE_MASK))&((PAGE_MASK)))
+#define KERNEL_PAGING_START	((_MEM_START+(~PAGE_MASK))&((PAGE_MASK))) //向上取页面大小整数
 #define	KERNEL_PAGING_END	(((KERNEL_MEM_END-KERNEL_PAGING_START)/(PAGE_SIZE+sizeof(struct page)))*(PAGE_SIZE)+KERNEL_PAGING_START)
 
 /*page number in need */
