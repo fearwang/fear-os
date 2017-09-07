@@ -100,7 +100,7 @@ static inline int list_empty(const struct list_head *head)
 
 #define KERNEL_MEM_END	(_MEM_END)
 /*the bigin and end of the kernel mem which is needed to be paged.*/
-#define KERNEL_PAGING_START	((_MEM_START+(~PAGE_MASK))&((PAGE_MASK))) //ÏòÉÏÈ¡Ò³Ãæ´óĞ¡ÕûÊı
+#define KERNEL_PAGING_START	((_MEM_START+(~PAGE_MASK))&((PAGE_MASK))) //å‘ä¸Šå–é¡µé¢å¤§å°æ•´æ•°
 #define	KERNEL_PAGING_END	(((KERNEL_MEM_END-KERNEL_PAGING_START)/(PAGE_SIZE+sizeof(struct page)))*(PAGE_SIZE)+KERNEL_PAGING_START)
 
 /*page number in need */
