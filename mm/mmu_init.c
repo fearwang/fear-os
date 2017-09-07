@@ -1,4 +1,4 @@
-
+#include <mem_layout.h>
 
 /*mask for page table base addr*/
 #define PAGE_TABLE_L1_BASE_ADDR_MASK	(0xffffc000)
@@ -13,8 +13,8 @@
 #define PTE_L1_SECTION_PADDR_BASE_MASK	(0xfff00000)  //mask select page entry offset
 #define PTE_BITS_L1_SECTION				(0x2)
 
-//let page tabe stay at the high mem size = 12M   we can map 12*1024*1024/4 pages
-#define L1_PTR_BASE_ADDR			0x33700000	
+//let page tabe stay at the high mem size = 10M   we can map 10*1024*1024/4 pages
+#define L1_PTR_BASE_ADDR			PAGE_TABLE_BASE_ADDR	
 
 #define PHYSICAL_MEM_ADDR			0x30000000 //start of paddr in jz2440
 #define VIRTUAL_MEM_ADDR			0x30000000 //now we make va = pa
