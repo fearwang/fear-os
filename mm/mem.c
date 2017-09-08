@@ -1,4 +1,5 @@
 #include <mem_layout.h>
+#include <debug.h>
 
 #define	NULL	((void *)0)
 
@@ -137,60 +138,67 @@ struct page {
 };
 
 
-
-#define MAX_BUDDY_PAGE_NUM	(9)	//finally I desided to choose a fixed value,which means users could alloc 1M space at most,those who need more than 1M should change the macro to reserve enough space for private use.
+//finally I desided to choose a fixed value,which means users could alloc 1M space at most,those who need more than 1M should change the macro to reserve enough space for private use.
+#define BUDDY_ORDER_NUM	(9)	//the numbder of order we support
+#define BUDDY_MAX_ORDER  (BUDDY_ORDER_NUM - 1)	//the max order 
 
 #define AVERAGE_PAGE_NUM_PER_BUDDY	(KERNEL_PAGE_NUM/MAX_BUDDY_PAGE_NUM)
 #define PAGE_NUM_FOR_EACH_BUDDY(j) ((AVERAGE_PAGE_NUM_PER_BUDDY>>(j))*(1<<(j)))
-#define PAGE_NUM_FOR_MAX_BUDDY	((1<<MAX_BUDDY_PAGE_NUM)-1)
 
-struct list_head page_buddy[MAX_BUDDY_PAGE_NUM];
+#define PAGE_NUM_FOR_MAX_ORDER	(1<<BUDDY_MAX_ORDER) //the page num of the max order
+#define PAGE_NUM_MASK_FOR_MAX_ORDER (PAGE_NUM_FOR_MAX_ORDER-1) //the mask of max page num
+
+static struct list_head page_buddy[BUDDY_ORDER_NUM]; //we need BUDDY_ORDER_NUM list_head  
 
 
-struct page *virt_to_page(unsigned int addr){
+//get the pointer to struct page with the addr
+struct page *virt_to_page(unsigned int addr) {
 	unsigned int i;
-	i=((addr)-KERNEL_PAGING_START)>>PAGE_SHIFT;
-	if(i>KERNEL_PAGE_NUM)
+	i = ((addr)-KERNEL_PAGING_START) >> PAGE_SHIFT;
+	if(i > KERNEL_PAGE_NUM)
 		return NULL;
-	return (struct page *)KERNEL_PAGE_START+i;
+	return (struct page *)KERNEL_PAGE_START + i;
 }
 
 void init_page_buddy(void){
 	int i;
-	for(i=0;i<MAX_BUDDY_PAGE_NUM;i++){
+	for(i = 0; i < BUDDY_ORDER_NUM; i++) {
 		INIT_LIST_HEAD(&page_buddy[i]);
 	}
 }
 
-
+//init all struct page, try to make the mem max buddy
 void init_page_map(void){
 	int i;
-	struct page *pg=(struct page *)KERNEL_PAGE_START;
+	pr_info("the start addr of heap is %x, end addr is %x\n", KERNEL_PAGING_START, KERNEL_PAGING_END);
+	pr_info("page number is %d\n", KERNEL_PAGE_NUM);
+	pr_info("the single page num is %d\n", KERNEL_PAGE_NUM&(~PAGE_NUM_MASK_FOR_MAX_ORDER));
+	pr_info("page array start is %x, end is %x\n", KERNEL_PAGE_START, KERNEL_PAGE_END);
+	pr_info("size of struct page is %d\n", sizeof(struct page));
+	struct page *pg = (struct page *)KERNEL_PAGE_START;
 	init_page_buddy();
-	for(i=0;i<(KERNEL_PAGE_NUM);pg++,i++){
-/*fill struct page first*/
-		pg->vaddr=KERNEL_PAGING_START+i*PAGE_SIZE;	
-		pg->flags=PAGE_AVAILABLE;
+	for(i = 0; i < (KERNEL_PAGE_NUM); pg++,i++) {
+		/*1.fill struct page first*/
+		pg->vaddr = KERNEL_PAGING_START + i*PAGE_SIZE;	
+		pg->flags = PAGE_AVAILABLE;
 		INIT_LIST_HEAD(&(pg->list));
 
-
-/*make the memory max buddy as possible*/
-		if(i<(KERNEL_PAGE_NUM&(~PAGE_NUM_FOR_MAX_BUDDY))){	
-/*the following code should be dealt carefully,we would change the order field of a head struct page to the corresponding order,and change others to -1*/
-			if((i&PAGE_NUM_FOR_MAX_BUDDY)==0){
-				pg->order=MAX_BUDDY_PAGE_NUM-1;
-			}else{
-				pg->order=-1;
+		/*2.make the memory max buddy as possible*/
+		if(i < (KERNEL_PAGE_NUM&(~PAGE_NUM_MASK_FOR_MAX_ORDER))) {	
+			/*the following code should be dealt carefully,we would change the order field of a head struct page to the corresponding order,and change others to -1*/
+			if((i&PAGE_NUM_MASK_FOR_MAX_ORDER) == 0) {
+				pr_info("the addr of this buddy is %x\n", pg->vaddr);
+				pg->order = BUDDY_MAX_ORDER;
+			} else {
+				pg->order = -1;
 			}
-			list_add_tail(&(pg->list),&page_buddy[MAX_BUDDY_PAGE_NUM-1]);
-/*the remainder not enough to merge into a max buddy is done as min buddy*/
+			list_add_tail(&(pg->list),&page_buddy[BUDDY_MAX_ORDER]);
+		/*3.the remainder not enough to merge into a max buddy is done as min buddy*/
 		}else{
-			pg->order=0;
+			pg->order = 0;
 			list_add_tail(&(pg->list),&page_buddy[0]);
 		}
-
 	}
-
 }
 
 /*we can do these all because the page structure that represents one page aera is continuous*/
@@ -200,37 +208,41 @@ void init_page_map(void){
 
 
 /*the logic of this function seems good,no bug reported yet*/
+//get the page from buddy system,with the paramter 'order'
 struct page *get_pages_from_list(int order){
 	unsigned int vaddr;
-	int neworder=order;
+	int neworder = order;
 	struct page *pg,*ret;
 	struct list_head *tlst,*tlst1;
-	for(;neworder<MAX_BUDDY_PAGE_NUM;neworder++){
-		if(list_empty(&page_buddy[neworder])){
+	pr_info("call get_pages_from_list with order=%d, neworder=%d\n", order, neworder);
+	//try from the order we get from the paramter, if there is none, try order++
+	for(; neworder < BUDDY_ORDER_NUM; neworder++) {
+		pr_info("try order %d\n", neworder);
+		if(list_empty(&page_buddy[neworder])) {
 			continue;
-		}else{
-			pg=list_entry(page_buddy[neworder].next,struct page,list);
-			tlst=&(BUDDY_END(pg,neworder)->list);
-			tlst->next->prev=&page_buddy[neworder];
-			page_buddy[neworder].next=tlst->next;
+		} else {
+			pg = list_entry(page_buddy[neworder].next,struct page,list);
+			pr_info("get a buddy with order %d, pg->vaddr = %x\n", neworder, pg->vaddr);
+			tlst = &(BUDDY_END(pg,neworder)->list);//get the last page of the buddy with neworder
+			tlst->next->prev = &page_buddy[neworder];//remove chain from the list with neworder
+			page_buddy[neworder].next = tlst->next;
 			goto OUT_OK;
 		}
 	}
 	return NULL;
 	
 OUT_OK:
-	for(neworder--;neworder>=order;neworder--){
-		
-		tlst1=&(BUDDY_END(pg,neworder)->list);
-		tlst=&(pg->list);
+	for(neworder--; neworder >= order; neworder--) {
+		tlst1 = &(BUDDY_END(pg,neworder)->list);
+		tlst = &(pg->list);
 
-		pg=NEXT_BUDDY_START(pg,neworder);
-		list_entry(tlst,struct page,list)->order=neworder;
-
+		pg = NEXT_BUDDY_START(pg,neworder);
+		list_entry(tlst,struct page,list)->order = neworder;
+		//分裂的时候插入 尾部
 		list_add_chain_tail(tlst,tlst1,&page_buddy[neworder]);
 	}
-	pg->flags|=PAGE_BUDDY_BUSY;
-	pg->order=order;
+	pg->flags |= PAGE_BUDDY_BUSY; //split a buddy to two part, take the last one as result
+	pg->order = order;
 	return pg;
 }
 
@@ -238,38 +250,45 @@ OUT_OK:
 
 void put_pages_to_list(struct page *pg,int order){
 	struct page *tprev,*tnext;
-	if(!(pg->flags&PAGE_BUDDY_BUSY)){
+	if(!(pg->flags&PAGE_BUDDY_BUSY)) {
 		printk("something must be wrong when you see this message,that probably means you are forcing to release a page that was not alloc at all\n");
 		return;
 	}
 	pg->flags&=~(PAGE_BUDDY_BUSY);
 
-	for(;order<MAX_BUDDY_PAGE_NUM;order++){
+	for(;order < BUDDY_MAX_ORDER; order++) {
+		pr_info("need to combine order=%d\n", order);
 		tnext=NEXT_BUDDY_START(pg,order);
 		tprev=PREV_BUDDY_START(pg,order);
-		if((!(tnext->flags&PAGE_BUDDY_BUSY))&&(tnext->order==order)){
-			pg->order++;
-			tnext->order=-1;
+		if((!(tnext->flags&PAGE_BUDDY_BUSY)) && (tnext->order == order)) {
+			pg->order++; //order++ of the first struct page which we will combine
+			tnext->order = -1;
+			//即将被合并的chain，从原来的list中删除
 			list_remove_chain(&(tnext->list),&(BUDDY_END(tnext,order)->list));
-			BUDDY_END(pg,order)->list.next=&(tnext->list);
-			tnext->list.prev=&(BUDDY_END(pg,order)->list);
+			//将二者合并成一个chain
+			BUDDY_END(pg,order)->list.next = &(tnext->list);
+			tnext->list.prev = &(BUDDY_END(pg,order)->list);
+			pr_info("combine with next buddy\n");
 			continue;
-		}else if((!(tprev->flags&PAGE_BUDDY_BUSY))&&(tprev->order==order)){
-			pg->order=-1;
+		} else if ((!(tprev->flags&PAGE_BUDDY_BUSY)) && (tprev->order == order)) {
+			pg->order = -1; //we combine with the buddy before us, so we need to set order=-1 of the struct page
+			//即将被合并的chain，从原来的list中删除
+			list_remove_chain(&(tprev->list),&(BUDDY_END(tprev,order)->list));
+			//将二者合并成一个chain
+			BUDDY_END(tprev,order)->list.next = &(pg->list);
+			pg->list.prev = &(BUDDY_END(tprev,order)->list);
 			
-			list_remove_chain(&(pg->list),&(BUDDY_END(pg,order)->list));
-			BUDDY_END(tprev,order)->list.next=&(pg->list);
-			pg->list.prev=&(BUDDY_END(tprev,order)->list);
-			
-			pg=tprev;
+			pg = tprev;	//set the new first page of the new chain with order++
 			pg->order++;
+			pr_info("combine with pre buddy\n");
 			continue;
 		}else{
+			pr_info("combine failed\n");
 			break;
 		}
 	}
-	
-	list_add_chain(&(pg->list),&((tnext-1)->list),&page_buddy[order]);
+	//归还的时候，插入头部()
+	list_add_chain(&(pg->list),&(BUDDY_END(pg,pg->order)->list),&page_buddy[pg->order]);
 }
 
 
@@ -280,25 +299,27 @@ void *page_address(struct page *pg){
 struct page *alloc_pages(unsigned int flag,int order){
 	struct page *pg;
 	int i;
-	pg=get_pages_from_list(order);
-	if(pg==NULL)
+	//pr_info("call alloc_pages with order=%d\n", order);
+	pg = get_pages_from_list(order);
+	if(pg == NULL)
 		return NULL;
-	for(i=0;i<(1<<order);i++){
-		(pg+i)->flags|=PAGE_DIRTY;
+	for(i=0; i < (1<<order); i++) {
+		(pg+i)->flags |= PAGE_DIRTY;
 	}
 	return pg;
 }
 
 void free_pages(struct page *pg,int order){
 	int i;
-	for(i=0;i<(1<<order);i++){
-		(pg+i)->flags&=~PAGE_DIRTY;
+	for(i = 0; i < (1<<order); i++){
+		(pg+i)->flags &= ~PAGE_DIRTY;
 	}
 	put_pages_to_list(pg,order);
 }
 
 void *get_free_pages(unsigned int flag,int order){
 	struct page * page;
+	//pr_info("call get_free_pages with order=%d\n", order);
 	page = alloc_pages(flag, order);
 	if (!page)
 		return NULL;
@@ -306,7 +327,7 @@ void *get_free_pages(unsigned int flag,int order){
 }
 
 void put_free_pages(void *addr,int order){
-	free_pages(virt_to_page((unsigned int)addr),order);
+	free_pages(virt_to_page((unsigned int)addr), order);
 }
 
 

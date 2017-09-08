@@ -2,9 +2,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <s3c24xx.h>
+#include <debug.h>
 
 char *hint  = "fear@jz2440$ ";
-char *label  = "\n\rFear OS !!!\n\r";
+char *label  = "Fear OS V1.0";
 extern void enable_irq(void);
 extern void umask_int(unsigned int offset);
 
@@ -30,37 +31,35 @@ int start_kernel()
     unsigned char c;
     int prev_new_line = 0;
     uart0_init();   // 波特率115200，8N1(8个数据位，无校验位，1个停止位)
-
-    puts(label);
-    printk("using printk:%s", label);
+	
+    printk("using printk:%s\n", label);
 
     init_sys_mmu();
     start_mmu();
     
     int i = 0;
-    for(i = 0; i < strlen(hint); i++) {
-        putc_mmu(*(hint+i));
-    }
-	
+   
 	//timer_init();
 	
 	init_page_map();
-	kmalloc_init();
+	//kmalloc_init();
 	
 	char *p1,*p2,*p3,*p4;
-	p1=(char *)get_free_pages(0,6);
-	printk("the return address of get_free_pages %x\n",p1);
-	p2=(char *)get_free_pages(0,6);
-	printk("the return address of get_free_pages %x\n",p2);
-	put_free_pages(p2,6);
-	put_free_pages(p1,6);
-	p3=(char *)get_free_pages(0,7);
-	printk("the return address of get_free_pages %x\n",p3);
-	p4=(char *)get_free_pages(0,7);
-	printk("the return address of get_free_pages %x\n",p4);
-	put_free_pages(p4,7);
-	put_free_pages(p3,7);
+	p1=(char *)get_free_pages(0,7);
+	pr_debug("the return address of get_free_pages %x\n",p1);
+	p2=(char *)get_free_pages(0,7);
+	pr_debug("the return address of get_free_pages %x\n",p2);
+	put_free_pages(p2,7);
+	put_free_pages(p1,7);
 	
+	p3=(char *)get_free_pages(0,6);
+	pr_debug("the return address of get_free_pages %x\n",p3);
+	p4=(char *)get_free_pages(0,6);
+	pr_debug("the return address of get_free_pages %x\n",p4);
+	put_free_pages(p4,6);
+	put_free_pages(p3,6);
+	
+	/*
 	p1=kmalloc(127);
 	printk("the first alloced address is %x\n",p1);
 	p2=kmalloc(124);
@@ -71,7 +70,8 @@ int start_kernel()
 	printk("the third alloced address is %x\n",p3);
 	p4=kmalloc(512);
 	printk("the forth alloced address is %x\n",p4);
-	
+	*/
+	printk("%s", hint);
     while(1)
     {
         // 从串口接收数据后，判断其是否数字或子母，若是则加1后输出
