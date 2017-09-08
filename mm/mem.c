@@ -327,6 +327,12 @@ void *get_free_pages(unsigned int flag,int order){
 }
 
 void put_free_pages(void *addr,int order){
+	if(order > BUDDY_MAX_ORDER) {
+		pr_error("order > %d\n", BUDDY_MAX_ORDER);
+	} 
+	if(addr == NULL) {
+		pr_error("try to free NULL pointer");
+	}
 	free_pages(virt_to_page((unsigned int)addr), order);
 }
 
@@ -339,14 +345,15 @@ void put_free_pages(void *addr,int order){
 #define KMEM_CACHE_MAX_WAST			(PAGE_SIZE-KMEM_CACHE_SAVE_RATE*PAGE_SIZE/KMEM_CACHE_PERCENT)
 
 
+//根据一定的算法 得到合适的order
 int find_right_order(unsigned int size){
 	int order;
-	for(order=0;order<=KMEM_CACHE_MAX_ORDER;order++){
-		if(size<=(KMEM_CACHE_MAX_WAST)*(1<<order)){
+	for(order = 0; order <= KMEM_CACHE_MAX_ORDER; order++) {
+		if(size<=(KMEM_CACHE_MAX_WAST)*(1<<order)) {
 			return order;
 		}
 	}
-	if(size>(1<<order))
+	if(size > (1<<order))
 		return -1;
 	return order;
 }
@@ -355,49 +362,54 @@ int find_right_order(unsigned int size){
 int kmem_cache_line_object(void *head,unsigned int size,int order){
 	void **pl;
 	char *p;
-	pl=(void **)head;
-	p=(char *)head+size;
-	int i,s=PAGE_SIZE*(1<<order);
-	for(i=0;s>size;i++,s-=size){
-		*pl=(void *)p;
-		pl=(void **)p;
-		p=p+size;
+	pl=(void **)head; //head指向kmem cache得到的首地址
+	p=(char *)head + size; //指向下个对象的首地址
+	int i,s = PAGE_SIZE*(1<<order);
+	for(i = 0; s > size; i++, s -= size){
+		*pl = (void *)p;//第一个对象的首地址作为一个void* 指向下一个对象的首地址
+		pl = (void **)p;//pl指向下一个对象的首地址
+		*pl = NULL; //先将下一个对象 指向NULL (待检查)
+		p = p+size;
 	}
-	if(s==size)
+	if(s == size) {
+		*pl = NULL;
 		i++;
+	}
+	
 	return i;
 }
 
+//创建指定size的kmem_cache
 struct kmem_cache *kmem_cache_create(struct kmem_cache *cache,unsigned int size,unsigned int flags){
-	void **nf_block=&(cache->nf_block);
+	void **nf_block = &(cache->nf_block);
 
-	int order=find_right_order(size);
-	if(order==-1)
+	int order = find_right_order(size);
+	if(order == -1)
 		return NULL;
-	if((cache->head_page=alloc_pages(0,order))==NULL)
+	if((cache->head_page = alloc_pages(0,order)) == NULL)
 		return NULL;
-	*nf_block=page_address(cache->head_page);
-
-	cache->obj_nr=kmem_cache_line_object(*nf_block,size,order);
-	cache->obj_size=size;
-	cache->page_order=order;
-	cache->flags=flags;
-	cache->end_page=BUDDY_END(cache->head_page,order);
-	cache->end_page->list.next=NULL;
+	*nf_block = page_address(cache->head_page);
+	//格式化获得的buddy内存
+	cache->obj_nr = kmem_cache_line_object(*nf_block, size, order);
+	cache->obj_size = size;
+	cache->page_order = order;
+	cache->flags = flags;
+	cache->end_page = BUDDY_END(cache->head_page,order);
+	cache->end_page->list.next = NULL;//一开始只有一个buddy 所以设置为NULL
 
 	return cache;
 }
 
 /*FIXME:I dont understand it now*/
 void kmem_cache_destroy(struct kmem_cache *cache){
-	int order=cache->page_order;
-	struct page *pg=cache->head_page;
+	int order = cache->page_order;
+	struct page *pg = cache->head_page;
 	struct list_head *list;
 	while(1){
-		list=BUDDY_END(pg,order)->list.next;
-		free_pages(pg,order);
-		if(list){
-			pg=list_entry(list,struct page,list);
+		list = BUDDY_END(pg,order)->list.next;//指向kmem cache的下一个buddy
+		free_pages(pg,order); //释放一个buddy
+		if(list){//下一个buddy存在 接着释放
+			pg = list_entry(list,struct page,list);
 		}else{
 			return;
 		}
@@ -405,8 +417,8 @@ void kmem_cache_destroy(struct kmem_cache *cache){
 }
 
 void kmem_cache_free(struct kmem_cache *cache,void *objp){
-	*(void **)objp=cache->nf_block;
-	cache->nf_block=objp;
+	*(void **)objp = cache->nf_block;//objp指向要free的地址 objp转换成void** , 则*objp就是其指向的变量(void *)的值设置为目前空闲的地址，即objp指向的变量指向目前空闲的地址
+	cache->nf_block = objp;//nf_block指向新的空闲地址
 	cache->obj_nr++;
 }
 
@@ -414,27 +426,28 @@ void kmem_cache_free(struct kmem_cache *cache,void *objp){
 void *kmem_cache_alloc(struct kmem_cache *cache,unsigned int flag){
 	void *p;
 	struct page *pg;
-	if(cache==NULL)
+	if(cache == NULL)
 		return NULL;
-	void **nf_block=&(cache->nf_block);
-	unsigned int *nr=&(cache->obj_nr);
-	int order=cache->page_order;
+	void **nf_block = &(cache->nf_block);
+	unsigned int *nr = &(cache->obj_nr);
+	int order = cache->page_order;
 
-	if(!*nr){
-		if((pg=alloc_pages(0,order))==NULL)
+	if(!*nr) { //空闲对象个数为0 需要申请buddy
+		if((pg = alloc_pages(0,order)) == NULL)
 			return NULL;
-		*nf_block=page_address(pg);
-		cache->end_page->list.next=&pg->list;
-		cache->end_page=BUDDY_END(pg,order);
-		cache->end_page->list.next=NULL;
-		*nr+=kmem_cache_line_object(*nf_block,cache->obj_size,order);
+		*nf_block = page_address(pg);//cache->nf_block指向新申请的内存的起始地址
+		cache->end_page->list.next = &pg->list;//新申请的chain，插入到末尾
+		cache->end_page = BUDDY_END(pg,order);
+		cache->end_page->list.next = NULL;
+		//格式化内存
+		*nr += kmem_cache_line_object(*nf_block,cache->obj_size,order);
 	}
-
-	(*nr)--;
-	p=*nf_block;
-	*nf_block=*(void **)p;
-	pg=virt_to_page((unsigned int)p);
-	pg->cachep=cache;		//doubt it??? 
+	
+	(*nr)--;//空闲对象个数--
+	p = *nf_block; //p指向第一个空闲对象的地址
+	*nf_block = *(void **)p;//cache->nf_block指向下一个空闲对象
+	pg = virt_to_page((unsigned int)p);//地址转换成page结构体
+	pg->cachep = cache;		//doubt it??? 
 	return p;
 }
 
@@ -442,17 +455,19 @@ void *kmem_cache_alloc(struct kmem_cache *cache,unsigned int flag){
 
 #define KMALLOC_BIAS_SHIFT			(5)				//32byte minimal
 #define KMALLOC_MAX_SIZE			(4096)
-#define KMALLOC_MINIMAL_SIZE_BIAS	(1<<(KMALLOC_BIAS_SHIFT))
-#define KMALLOC_CACHE_SIZE			(KMALLOC_MAX_SIZE/KMALLOC_MINIMAL_SIZE_BIAS)
-struct kmem_cache kmalloc_cache[KMALLOC_CACHE_SIZE]={{0,0,0,0,NULL,NULL,NULL},};
-#define kmalloc_cache_size_to_index(size)	((((size))>>(KMALLOC_BIAS_SHIFT)))
+#define KMALLOC_MINIMAL_SIZE_BIAS	(1<<(KMALLOC_BIAS_SHIFT)) //32
+#define KMALLOC_CACHE_SIZE			(KMALLOC_MAX_SIZE/KMALLOC_MINIMAL_SIZE_BIAS) //128
 
+#define kmalloc_cache_size_to_index(size)	((((size))>>(KMALLOC_BIAS_SHIFT))-1)
+
+//kmalloc系统事先需要申请的kmem cache
+struct kmem_cache kmalloc_cache[KMALLOC_CACHE_SIZE]={{0,0,0,0,NULL,NULL,NULL},};
 
 int kmalloc_init(void){
 	int i=0;
 
-	for(i=0;i<KMALLOC_CACHE_SIZE;i++){
-		if(kmem_cache_create(&kmalloc_cache[i],(i+1)*KMALLOC_MINIMAL_SIZE_BIAS,0)==NULL)
+	for(i = 0; i < KMALLOC_CACHE_SIZE; i++) {
+		if(kmem_cache_create(&kmalloc_cache[i],(i+1)*KMALLOC_MINIMAL_SIZE_BIAS,0) == NULL)
 			return -1;
 	}
 	return 0;
@@ -460,13 +475,13 @@ int kmalloc_init(void){
 
 void *kmalloc(unsigned int size){
 	int index=kmalloc_cache_size_to_index(size);
-	if(index>=KMALLOC_CACHE_SIZE)
+	if(index >= KMALLOC_CACHE_SIZE)
 		return NULL;
 	return kmem_cache_alloc(&kmalloc_cache[index],0);
 }
 
 void kfree(void *addr){
 	struct page *pg;
-	pg=virt_to_page((unsigned int)addr);
-	kmem_cache_free(pg->cachep,addr);
+	pg = virt_to_page((unsigned int)addr);
+	kmem_cache_free(pg->cachep, addr);
 }

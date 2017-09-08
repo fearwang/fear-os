@@ -42,7 +42,7 @@ int start_kernel()
 	//timer_init();
 	
 	init_page_map();
-	//kmalloc_init();
+	kmalloc_init();
 	
 	char *p1,*p2,*p3,*p4;
 	p1=(char *)get_free_pages(0,7);
@@ -59,18 +59,18 @@ int start_kernel()
 	put_free_pages(p4,6);
 	put_free_pages(p3,6);
 	
-	/*
+	
 	p1=kmalloc(127);
-	printk("the first alloced address is %x\n",p1);
+	pr_debug("the first alloced address is %x\n",p1);
 	p2=kmalloc(124);
-	printk("the second alloced address is %x\n",p2);
+	pr_debug("the second alloced address is %x\n",p2);
 	kfree(p1);
 	kfree(p2);
 	p3=kmalloc(119);
-	printk("the third alloced address is %x\n",p3);
+	pr_debug("the third alloced address is %x\n",p3);
 	p4=kmalloc(512);
-	printk("the forth alloced address is %x\n",p4);
-	*/
+	pr_debug("the forth alloced address is %x\n",p4);
+	
 	printk("%s", hint);
     while(1)
     {

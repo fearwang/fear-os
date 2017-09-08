@@ -2,7 +2,7 @@
 #define _DEBUG_H_
 
 
-static int g_debug_level = 2;
+static int g_debug_level = 1;
 
 #define ERR_LOG  (0)
 #define DEBUG_LOG (1)
