@@ -32,6 +32,7 @@ obj-y += lib/
 obj-y += kernel/
 obj-y += driver/
 obj-y += mm/
+obj-y += fs/
 
 PHONY := all boot kernel
 

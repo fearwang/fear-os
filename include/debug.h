@@ -1,8 +1,11 @@
 #ifndef _DEBUG_H_
 #define _DEBUG_H_
 
+#ifndef DEBUG_LEVEL
+#define DEBUG_LEVEL  1
+#endif
 
-static int g_debug_level = 1;
+static int g_debug_level = DEBUG_LEVEL;
 
 #define ERR_LOG  (0)
 #define DEBUG_LOG (1)

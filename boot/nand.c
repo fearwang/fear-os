@@ -1,4 +1,12 @@
 
+/*
+ *	#: name                        size            offset          mask_flags
+ *	0: bootloader          0x00040000      0x00000000      0
+ *	1: params              0x00020000      0x00040000      0
+ *	2: kernel              0x00200000      0x00060000      0
+ *	3: root                0x0fda0000      0x00260000      0
+*/
+
 /* NAND FLASH¿ØÖÆÆ÷ */
 #define NFCONF (*((volatile unsigned long *)0x4E000000))
 #define NFCONT (*((volatile unsigned long *)0x4E000004))

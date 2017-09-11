@@ -24,11 +24,11 @@ void umask_int(unsigned int offset){
 
 void common_irq_handler(void){
 	unsigned int tmp=(1<<INTOFFSET);
-	printk("%d\t",INTOFFSET);
+	//printk("%d\t",INTOFFSET);
 	SRCPND|=tmp;
 	INTPND|=tmp;
 	enable_irq();
-	printk("interrupt occured\n\r");
+	//printk("interrupt occured\n\r");
 	//disable_irq();
 }
 

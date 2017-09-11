@@ -11,7 +11,10 @@
  *  |	meta data  |
     |   for buddy  |
 	|    system    | 
- *  |--------------|     0x33000000
+	|--------------|	 0x33000000
+	|	ram block  |
+	|     area     |
+ *  |--------------|     0x33200000
  *  |	page table |
  *  |--------------|     0x33a00000
  *  |			   |
@@ -47,10 +50,13 @@
 #define UND_STACK		( ABT_STACK-ABT_STACK_SIZE)
 #define SYS_STACK		( UND_STACK-UND_STACK_SIZE)
 
-#define PAGE_TABLE_SIZE   0xa00000  //10M
+#define PAGE_TABLE_SIZE   0x800000  //10M
 #define PAGE_TABLE_BASE_ADDR SYS_STACK - SYS_STACK_SIZE - PAGE_TABLE_SIZE
 
+#define RAM_DISK_SIZE     0x200000	//2M
+#define RAM_DISK_START	  PAGE_TABLE_BASE_ADDR - RAM_DISK_SIZE 	
+
 #define PLAT_HEAP_MEM_START PLAT_MEM_START + KERNEL_IMG_MAX_SIZE
-#define PLAT_HEAP_MEM_END PAGE_TABLE_BASE_ADDR
+#define PLAT_HEAP_MEM_END RAM_DISK_START
 
 #endif

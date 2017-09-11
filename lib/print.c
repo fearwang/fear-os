@@ -1,4 +1,5 @@
 #include <serial.h>
+#include <string.h>
 
 
 typedef char * va_list;
@@ -65,13 +66,6 @@ void __put_char(char *p,int num){
 	};
 }
 
-void * memcpy(void * dest,const void *src,unsigned int count)
-{
-	char *tmp = (char *) dest, *s = (char *) src;
-	while (count--)
-		*tmp++ = *s++;
-	return dest;
-}
 
 char *number(char *str, int num,int base,unsigned int flags){
 	int i=0;

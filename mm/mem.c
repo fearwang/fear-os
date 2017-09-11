@@ -91,7 +91,7 @@ static inline int list_empty(const struct list_head *head)
 
 
 
-#define _MEM_END	PAGE_TABLE_BASE_ADDR
+#define _MEM_END	PLAT_HEAP_MEM_END
 #define _MEM_START	PLAT_MEM_START + KERNEL_IMG_MAX_SIZE
 
 
@@ -384,6 +384,7 @@ struct kmem_cache *kmem_cache_create(struct kmem_cache *cache,unsigned int size,
 	void **nf_block = &(cache->nf_block);
 
 	int order = find_right_order(size);
+	pr_info("find order: %d\n",order);
 	if(order == -1)
 		return NULL;
 	if((cache->head_page = alloc_pages(0,order)) == NULL)
@@ -391,6 +392,7 @@ struct kmem_cache *kmem_cache_create(struct kmem_cache *cache,unsigned int size,
 	*nf_block = page_address(cache->head_page);
 	//格式化获得的buddy内存
 	cache->obj_nr = kmem_cache_line_object(*nf_block, size, order);
+	pr_info("the num of obj is: %d\n", cache->obj_nr);
 	cache->obj_size = size;
 	cache->page_order = order;
 	cache->flags = flags;
@@ -433,6 +435,7 @@ void *kmem_cache_alloc(struct kmem_cache *cache,unsigned int flag){
 	int order = cache->page_order;
 
 	if(!*nr) { //空闲对象个数为0 需要申请buddy
+		pr_debug("obj num = 0, need to alloc page\n");
 		if((pg = alloc_pages(0,order)) == NULL)
 			return NULL;
 		*nf_block = page_address(pg);//cache->nf_block指向新申请的内存的起始地址
@@ -458,7 +461,8 @@ void *kmem_cache_alloc(struct kmem_cache *cache,unsigned int flag){
 #define KMALLOC_MINIMAL_SIZE_BIAS	(1<<(KMALLOC_BIAS_SHIFT)) //32
 #define KMALLOC_CACHE_SIZE			(KMALLOC_MAX_SIZE/KMALLOC_MINIMAL_SIZE_BIAS) //128
 
-#define kmalloc_cache_size_to_index(size)	((((size))>>(KMALLOC_BIAS_SHIFT))-1)
+//这里的计算要注意 假设是32byte，那么index =0 可以满足 不必要去到index=1
+#define kmalloc_cache_size_to_index(size)	((((size-1))>>(KMALLOC_BIAS_SHIFT)))
 
 //kmalloc系统事先需要申请的kmem cache
 struct kmem_cache kmalloc_cache[KMALLOC_CACHE_SIZE]={{0,0,0,0,NULL,NULL,NULL},};
@@ -474,7 +478,8 @@ int kmalloc_init(void){
 }
 
 void *kmalloc(unsigned int size){
-	int index=kmalloc_cache_size_to_index(size);
+	int index = kmalloc_cache_size_to_index(size);
+	pr_info("kmalloc index = %d\n", index);
 	if(index >= KMALLOC_CACHE_SIZE)
 		return NULL;
 	return kmem_cache_alloc(&kmalloc_cache[index],0);
