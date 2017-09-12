@@ -7,6 +7,7 @@
 #include <driver_core.h>
 #include <kmalloc.h>
 #include <fs.h>
+#include <elf.h>
 
 
 char *hint  = "fear@jz2440$ ";
@@ -108,23 +109,55 @@ int start_kernel()
 		p_ramdisk++;
 	}*/
 	
+	//---------------------------test romfs------------------------
 	char buf[1024];
 	//storage[RAMDISK]->read(storage[RAMDISK],buf,0,sizeof(buf));
 	//hexdump(buf, 1024);
-	
-	
-	
 	struct inode *node;
-	//char buf[128];
-
 	node=fs_type[ROMFS]->namei(fs_type[ROMFS],"init.rc");
-	printk("after namei\n");
-	printk("size = %d\n",node->dsize);
 	fs_type[ROMFS]->device->read(fs_type[ROMFS]->device,buf,fs_type[ROMFS]->get_daddr(node),node->dsize);
-	printk("after read\n");
+	pr_debug("read from %s:\n", node->name);
 	for(i = 0;i < node->dsize; i++){
 		printk("%c",buf[i]);
 	}
+	kfree(node);
+	
+	//-------------test elf-----------------------------------
+	//struct inode *node;
+	struct elf32_phdr *phdr;
+	struct elf32_ehdr *ehdr;
+	int pos,dpos;
+	char *buf2;
+	if((buf2 = kmalloc(1024)) == (void *)0) {
+		printk("get free pages error\n");
+		goto HALT;
+	}
+
+	if((node = fs_type[ROMFS]->namei(fs_type[ROMFS],"main.elf")) == (void *)0){
+		printk("inode read eror\n");
+		goto HALT;
+	}
+
+	if( fs_type[ROMFS]->device->read(fs_type[ROMFS]->device,buf2,fs_type[ROMFS]->get_daddr(node),1024) ) {
+		printk("read error\n");
+		goto HALT;
+	}
+
+	ehdr = (struct elf32_ehdr *)buf2;
+	phdr = (struct elf32_phdr *)((char *)buf2 + ehdr->e_phoff);
+
+	for(i = 0;i < ehdr->e_phnum; i++) {
+		if(CHECK_PT_TYPE_LOAD(phdr)) {
+			if(fs_type[ROMFS]->device->read(fs_type[ROMFS]->device,(char *)phdr->p_vaddr,fs_type[ROMFS]->get_daddr(node)+phdr->p_offset,phdr->p_filesz)<0) {
+				printk("dout error\n");
+				goto HALT;
+			}
+			phdr++;
+		}
+	}
+
+	exec((unsigned int)(ehdr->e_entry));
+	printk("after exec, %x\n", ehdr->e_entry);
 	
 	printk("%s", hint);
     while(1)
@@ -151,4 +184,7 @@ int start_kernel()
     }
 
     return 0;
+	
+HALT:
+	while(1);
 }

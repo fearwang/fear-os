@@ -34,9 +34,9 @@ obj-y += driver/
 obj-y += mm/
 obj-y += fs/
 
-PHONY := all boot kernel
+PHONY := all boot kernel rootfs
 
-all : boot kernel
+all : boot kernel rootfs
 	@echo "build successful!!"
 
 boot :
@@ -51,12 +51,18 @@ kernel :
 	$(OBJCOPY) -O binary -S fear.elf $(TARGET)
 	$(OBJDUMP) -D -m arm fear.elf > fear.dis
 
-
+rootfs :
+	@echo "start build rootfs..."
+	make -C tools/
+	@echo "rootfs build successful!!"
+	
 clean:
 	rm -f $(shell find -name "*.o")
 	rm -f $(shell find -name "*.elf")
 	rm -f $(shell find -name "*.dis")
 	make -C boot/ clean
+	make -C tools/ clean
+	rm rootfs.img
 	rm -f $(TARGET)
 	rm -f $(BOOT)
 
@@ -66,7 +72,9 @@ distclean:
 	rm -f $(shell find -name "*.dis")
 	rm -f $(shell find -name "*.d")
 	rm -f $(TARGET)
+	rm rootfs.img
 	make -C boot/ clean
+	make -C tools/ clean
 	rm -f $(BOOT)
 	
 .PHONY : $(PHONY)
