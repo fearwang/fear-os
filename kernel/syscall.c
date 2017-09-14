@@ -3,13 +3,13 @@
 void test_syscall_args(int index,int *array){
 	printk("this following message is from kernel printed by test_syscall_args\n");
 	int i;
-	for(i=0;i<index;i++){
+	for(i = 0;i < index; i++){
 		printk("the %d arg is %x\n",i,array[i]);
 	}
 }
 
 syscall_fn __syscall_test(int index,int *array){
-	test_syscall_args(index,array);
+	test_syscall_args(index, array);
 	return 0;
 }
 

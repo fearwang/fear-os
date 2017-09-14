@@ -4,9 +4,10 @@
 
 #define TXD0READY   (1<<2)
 #define RXD0READY   (1)
-int main()
+void main()
 {
     char *tmp = "this is main.elf\n\r";
+	char *ret_str = "[main.elf] ret = ";
     int i = 0;
     while(tmp[i]) {
         while (!(UTRSTAT0 & TXD0READY));
@@ -19,6 +20,22 @@ int main()
 	test_array[1]=0x0f;
 
 
-	SYSCALL(__NR_test,2,test_array,ret);
+	SYSCALL(__NR_test, 2, test_array, ret);
+	
+	i = 0;
+    while(ret_str[i]) {
+        while (!(UTRSTAT0 & TXD0READY));
+        UTXH0 = ret_str[i];
+        i++;
+    }
+	while (!(UTRSTAT0 & TXD0READY));
+    UTXH0 = ret+0x30;
+	
+	while (!(UTRSTAT0 & TXD0READY));
+    UTXH0 = '\n';
+        
+	while (!(UTRSTAT0 & TXD0READY));
+    UTXH0 = '\r';
+ 
 }
 

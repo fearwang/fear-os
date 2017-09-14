@@ -6,7 +6,7 @@
 
 typedef int (*syscall_fn)(int num,int *args);
 
-
+/*
 #define SYSCALL(num,pnum,parray,ret)	do{							\
 							asm volatile(							\
 								"stmfd r13!,{%3}\n"\
@@ -21,3 +21,18 @@ typedef int (*syscall_fn)(int num,int *args);
 								);									\
 							}while(0)
 
+*/
+#define SYSCALL(num,pnum,parray,ret)	do{							\
+							asm volatile(							\
+								"stmfd r13!,{%3}\n"\
+								"stmfd r13!,{%2}\n"\
+								"sub r13,r13,#4\n"\
+								"mov r0, r13\n"\
+								"swi %1\n"							\
+								"ldmfd r13!,{%0}\n"\
+								"add r13,r13,#8\n"\
+								:"=r"(ret)							\
+								:"i"(num),"r"(pnum),"r"(parray)		\
+								:"r0","r2","r3"\
+								);									\
+							}while(0)

@@ -36,37 +36,36 @@
 __vector_undefined:
 	nop
 	
-__vector_swi:
-	str	r14,[r13,#-0xc]
-	mrs	r14,spsr
-	str	r14,[r13,#-0x8]
-	str r0,[r13,#-0x4]
-	mov	r0,r13
-	CHANGE_TO_SYS
-	str	r14,[r13,#-8]!
-	ldr	r14,[r0,#-0xc]
-	str	r14,[r13,#4]
-	ldr r14,[r0,#-0x8]
-	ldr r0,[r0,#-0x4]
-	stmfd r13!,{r0-r3,r14}
-	ldr r3,[r13,#24]
-	ldr r0,[r3,#-4]
-	bic r0,r0,#0xff000000
-	ldr r1,[r13,#32]
-	ldr r2,[r13,#36]
-	bl	sys_call_schedule
-	str r0,[r13,#28]
-	ldmfd r13!,{r0-r3}
-	ldmfd r13!,{r14}
-	msr cpsr,r14
-	ldmfd r13!,{r14,pc}
+__vector_swi:			//软中断会使得cpu进入svc mode 单核不考虑swi重入?
+	stmfd sp!, {r0-r3,r12,r14}
+	//mov r1, sp
+	mrs r0, spsr
+	stmfd sp!, {r0}
 
+	ldr r0, [lr, #-4]
+	bic r0, r0, #0xff000000
+	
+	ldr r12, [sp, #4] 		//sp指向spsr，+4位置保存r0，根据r0取出参数
+	ldr r1, [r12, #4]
+	ldr r2, [r12, #8]
+	
+	bl	sys_call_schedule
+	
+	str r0, [r12]		//返回值保存在之前预留的位置中 r0存储预留给返回值的地址
+	
+	ldmfd sp!, {r12}		//以下两条指令先恢复spsr
+	msr spsr, r12
+	ldmfd sp!, {r0-r3, r12, pc}^
+	
 __vector_prefetch_abort:	
 	nop
+	
 __vector_data_abort:
 	nop
+	
 __vector_reserved:
 	nop
+	
 __vector_irq:		//中断发生的时候 硬件自动禁止中断
 	sub r14,r14,#4
 	stmfd r13!,{r14}
@@ -82,7 +81,6 @@ __vector_irq:		//中断发生的时候 硬件自动禁止中断
 	ldmfd r13!,{r14}
 	msr spsr,r14
 	ldmfd r13!,{pc}^
-
 	
 __vector_fiq:
 	nop
