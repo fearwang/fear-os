@@ -1,3 +1,4 @@
+#include <stdio.h>
 
 /* NAND FLASH控制器 */
 #define NFCONF (*((volatile unsigned long *)0x4E000000))
@@ -94,6 +95,7 @@ void nand_read(unsigned int addr, unsigned char *buf, unsigned int len)
 
 	while (i < len)
 	{
+		//printk("read %d\n", addr);
 		/* 2. 发出读命令00h */
 		nand_cmd(0x00);
 
@@ -115,7 +117,10 @@ void nand_read(unsigned int addr, unsigned char *buf, unsigned int len)
 		}
 		
 		col = 0;
+		//printk("read %d done\n", addr);
 	}
+	//printk("read done, before deselect\n");
 	/* 7. 取消选中 */		
 	nand_deselect();
+	//printk("read done, after deselect\n");
 }

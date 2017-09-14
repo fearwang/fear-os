@@ -23,13 +23,16 @@ void umask_int(unsigned int offset){
 }
 
 void common_irq_handler(void){
-	unsigned int tmp=(1<<INTOFFSET);
+	unsigned int tmp = (1<<INTOFFSET);
 	//printk("%d\t",INTOFFSET);
 	SRCPND|=tmp;
 	INTPND|=tmp;
 	enable_irq();
-	//printk("interrupt occured\n\r");
-	//disable_irq();
+	/* 即使发生了中断 在中断向量中 汇编不会破坏现场，而且当调用c代码时，编译器会保存函数使用的寄存器，因此
+	 * 中断嵌套发生的时候，前一个执行环境并不会被破坏
+	 */
+	//printk("interrupt occured\n\r"); 
+	disable_irq();
 }
 
 

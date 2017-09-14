@@ -64,7 +64,7 @@ int start_kernel()
     
 	
     int i = 0;
-	//timer_init();
+	timer_init();
 	print_mem_layout();
 	driver_init();
 	romfs_init();

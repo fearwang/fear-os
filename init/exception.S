@@ -18,6 +18,9 @@
     msr     cpsr_c,#(DISABLE_FIQ|DISABLE_IRQ|IRQ_MOD)
 .endm
 
+.macro CHANGE_TO_SYS
+    msr     cpsr_c,#(DISABLE_FIQ|DISABLE_IRQ|SYS_MOD)
+.endm
 
 .global	__vector_undefined
 .global	__vector_swi
@@ -32,35 +35,54 @@
 
 __vector_undefined:
 	nop
+	
 __vector_swi:
-	nop
+	str	r14,[r13,#-0xc]
+	mrs	r14,spsr
+	str	r14,[r13,#-0x8]
+	str r0,[r13,#-0x4]
+	mov	r0,r13
+	CHANGE_TO_SYS
+	str	r14,[r13,#-8]!
+	ldr	r14,[r0,#-0xc]
+	str	r14,[r13,#4]
+	ldr r14,[r0,#-0x8]
+	ldr r0,[r0,#-0x4]
+	stmfd r13!,{r0-r3,r14}
+	ldr r3,[r13,#24]
+	ldr r0,[r3,#-4]
+	bic r0,r0,#0xff000000
+	ldr r1,[r13,#32]
+	ldr r2,[r13,#36]
+	bl	sys_call_schedule
+	str r0,[r13,#28]
+	ldmfd r13!,{r0-r3}
+	ldmfd r13!,{r14}
+	msr cpsr,r14
+	ldmfd r13!,{r14,pc}
+
 __vector_prefetch_abort:	
 	nop
 __vector_data_abort:
 	nop
 __vector_reserved:
 	nop
-__vector_irq:		
-	sub r14,r14,#4			//计算上一个状态的返回地址
-	str r14,[r13,#-0x4]		//并将其保存
-	mrs r14,spsr			//spsr_irq保存到r14中
-	str r14,[r13,#-0x8]		//压栈，即将上一个状态的cpsr保存起来 即使再发生中断 lr和cpsr都不会被破坏
-	str r0,[r13,#-0xc]		//在irq模式的堆栈中保存r0
-	mov r0,r13				//使用r0保存r13的值给svc模式  svc模式从中取得lr 和spsr_irq
-	CHANGE_TO_SVC		
-	str r14,[r13,#-0x8]  	//同样是保存r14_svc
-	ldr r14,[r0,#-0x4]		//设置r14_svc为r0传递过来的值 即r13_irq
-	str r14,[r13,#-0x4]		//从r13_irq回复出上一个状态的返回地址
-
-    sub r13,r13,#0x8
-
-	ldr r14,[r0,#-0x8]
-	ldr r0,[r0,#-0xc]
-	stmdb r13!,{r0-r3,r14}
+__vector_irq:		//中断发生的时候 硬件自动禁止中断
+	sub r14,r14,#4
+	stmfd r13!,{r14}
+	mrs r14,spsr
+	stmfd r13!,{r14}
+	
+	CHANGE_TO_SYS
+	stmfd r13!,{r0-r3}	//保存被调用者不会保存的寄存器 其他寄存器common_irq_handler函数会保存 所以这里不用保存
 	bl common_irq_handler
-	ldmia r13!,{r0-r3,r14}
+	ldmfd r13!,{r0-r3}
+	
+	CHANGE_TO_IRQ
+	ldmfd r13!,{r14}
 	msr spsr,r14
-	ldmfd r13!,{r14,pc}^
+	ldmfd r13!,{pc}^
+
 	
 __vector_fiq:
 	nop

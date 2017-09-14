@@ -36,8 +36,6 @@
 .extern __bss_end__
 
 __vector_reset:
-    msr cpsr_c,#(DISABLE_IRQ|DISABLE_FIQ|SVC_MOD)
-	ldr	sp,=_SVC_STACK
 	msr cpsr_c,#(DISABLE_IRQ|DISABLE_FIQ|IRQ_MOD)
 	ldr	sp,=_IRQ_STACK
 	msr cpsr_c,#(DISABLE_IRQ|DISABLE_FIQ|FIQ_MOD)
@@ -48,6 +46,8 @@ __vector_reset:
 	ldr	sp,=_UND_STACK
 	msr cpsr_c,#(DISABLE_IRQ|DISABLE_FIQ|SYS_MOD)
 	ldr	sp,=_SYS_STACK
+	msr cpsr_c,#(DISABLE_IRQ|DISABLE_FIQ|SVC_MOD)  
+	ldr	sp,=_SVC_STACK    //最后kernel运行在svc模式
 
 _clear_bss:
 	ldr r1,_bss_start_
