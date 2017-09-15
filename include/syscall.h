@@ -1,7 +1,8 @@
 #define __NR_SYSCALL_BASE	0x0
 
-#define __NR_test						(__NR_SYSCALL_BASE+ 0)
-#define __NR_SYS_CALL					(__NR_SYSCALL_BASE+1)
+#define __NR_test						(__NR_SYSCALL_BASE + 0)
+#define __NR_malloc						(__NR_SYSCALL_BASE + 1)
+#define __NR_SYS_CALL					(__NR_SYSCALL_BASE + 2)
 
 
 typedef int (*syscall_fn)(int num,int *args);

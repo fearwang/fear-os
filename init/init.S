@@ -48,6 +48,7 @@ __vector_reset:
 	ldr	sp,=_SYS_STACK
 	msr cpsr_c,#(DISABLE_IRQ|DISABLE_FIQ|SVC_MOD)  
 	ldr	sp,=_SVC_STACK    //最后kernel运行在svc模式
+	bl print_init_stage
 
 _clear_bss:
 	ldr r1,_bss_start_

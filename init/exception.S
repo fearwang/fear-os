@@ -50,8 +50,15 @@ __vector_swi:			//软中断会使得cpu进入svc mode 单核不考虑swi重入?
 	ldr r2, [r12, #8]
 	
 	bl	sys_call_schedule
+	ldr r12, [sp, #4]
+	str r0, [r12]		//返回值保存在之前预留的位置中
 	
-	str r0, [r12]		//返回值保存在之前预留的位置中 r0存储预留给返回值的地址
+	mov r3, r0
+	mov r0, #0
+	mov r1, r3	
+	bl print_reg
+	
+	
 	
 	ldmfd sp!, {r12}		//以下两条指令先恢复spsr
 	msr spsr, r12

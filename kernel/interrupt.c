@@ -29,6 +29,29 @@
 
 #include <s3c24xx.h>
 
+#define NULL (void *)0
+#define TIMER4_IRQ_NUM 14
+
+typedef int (*irq_handler)(void *arg);
+
+irq_handler  irq_handler_table[64];
+
+int register_irq(irq_handler handler, int irq_num, int flag)
+{
+	if(irq_handler_table[irq_num] != NULL) {
+		printk("irq %d already register before.\n");
+		return -1;
+	}
+		
+	irq_handler_table[irq_num] = handler;
+	return 0;
+}
+
+int timer4_irq_handler(void *arg)
+{
+	//printk("timer4_irq_handler exec\n");
+}
+
 void enable_irq(void){
 	asm volatile (
 		"mrs r4,cpsr\n\t"
@@ -52,16 +75,22 @@ void umask_int(unsigned int offset){
 }
 
 void common_irq_handler(void){
-	unsigned int tmp = (1<<INTOFFSET);
-	printk("%d\t",INTOFFSET);
-	SRCPND|=tmp;
-	INTPND|=tmp;
+	unsigned int irq_num = INTOFFSET;
+	unsigned int tmp = (1 << INTOFFSET);
+	//printk("%d\t",INTOFFSET);
+	SRCPND |= tmp;
+	INTPND |= tmp;
 	enable_irq();
 	/* 即使发生了中断 在中断向量中 汇编不会破坏现场，而且当调用c代码时，编译器会保存函数使用的寄存器，因此
 	 * 中断嵌套发生的时候，前一个执行环境并不会被破坏
 	 */
-	printk("interrupt occured\n\r"); 
+	//printk("interrupt occured\n\r");
+	irq_handler_table[irq_num](NULL);
 	disable_irq();
 }
 
 
+void irq_init()
+{
+	register_irq(timer4_irq_handler, TIMER4_IRQ_NUM, 0);
+}

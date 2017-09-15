@@ -51,6 +51,20 @@ void format_ramdisk()
 	printk("format_ramdisk done\n");
 }
 
+
+void delay(void){
+	volatile unsigned int time=0xffff;
+	while(time--);
+}
+
+int  test_process(void *p){
+	while(1){
+		delay();
+		printk("test process %dth\n",(int)p);
+	}
+	return 0;
+}
+
 int start_kernel()
 {
     unsigned char c;
@@ -62,6 +76,7 @@ int start_kernel()
     init_sys_mmu();
     start_mmu();
     
+	irq_init();
 	
     int i = 0;
 	timer_init();
@@ -159,6 +174,16 @@ int start_kernel()
 	exec((unsigned int)(ehdr->e_entry));
 	printk("after exec, %x\n", ehdr->e_entry);
 	
+	//switch_to_user_mode();
+	/*
+	i=do_fork(test_process,(void *)0x1);
+	i=do_fork(test_process,(void *)0x2);
+
+	while(1){
+		delay();
+		printk("this is the idle process\n");
+	};
+	*/
 	printk("%s", hint);
     while(1)
     {
