@@ -8,12 +8,15 @@
 char *tmp = "this is main.elf\n\r";
 char *ret_str = "[main.elf] ret = ";
 char *malloc_str = "xfter syscall_malloc addr = ";
+
+void delay();
+
 void main()
 {
 
 	
     int i = 0;
-	/*
+	
     while(tmp[i]) {
         while (!(UTRSTAT0 & TXD0READY));
         UTXH0 = tmp[i];
@@ -43,7 +46,7 @@ void main()
     UTXH0 = '\r';
 	
 	
-	*/
+	
 	//------------------------------------
 	
 	int test_array2[2],ret2;
@@ -68,8 +71,23 @@ void main()
 	while (!(UTRSTAT0 & TXD0READY));
     UTXH0 = '\r';
 	
+	while(1) {
+		delay();
+		int i = 0;
+		while(tmp[i]) {
+			while (!(UTRSTAT0 & TXD0READY));
+			UTXH0 = tmp[i];
+			i++;
+		}
+	}
 
  
+}
+
+void delay(void)
+{
+	volatile unsigned int time=0xfffff;
+	while(time--);
 }
 
 

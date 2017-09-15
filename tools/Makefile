@@ -1,5 +1,5 @@
-obj-y := main.o
-
+obj-y := head.o main.o
+ 
 all: main.bin
 	cp main.elf ./rootfs
 	genromfs -d rootfs/ -f rootfs.img
