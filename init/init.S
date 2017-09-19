@@ -7,7 +7,7 @@
 .equ SVC_MOD,			0x13
 .equ ABT_MOD,			0x17
 .equ UND_MOD,			0x1b
-.equ USR_MOD,			0x1b
+.equ USR_MOD,			0x10
 
 .equ MEM_SIZE,			0x4000000
 .equ TEXT_BASE,			0x30000000

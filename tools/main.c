@@ -2,6 +2,7 @@
 #include <s3c24xx.h>
 #include <syscall.h>
 #include <malloc.h>
+#include <proc.h>
 
 #define TXD0READY   (1<<2)
 #define RXD0READY   (1)
@@ -9,12 +10,62 @@ char *tmp = "this is main.elf\n\r";
 char *ret_str = "[main.elf] ret = ";
 char *malloc_str = "xfter syscall_malloc addr = ";
 
-void delay();
+void putc_elf(unsigned char c)
+{
+
+    /* 等待，直到发送缓冲区中的数据已经全部发送出去 */
+    while (!(UTRSTAT0 & TXD0READY));
+    
+
+    /* 向UTXH0寄存器中写入数据，UART即自动将它发送出去 */
+    UTXH0 = c;
+}
+
+void puts_elf(char *str)
+{
+	int i = 0;
+	while (str[i])
+	{
+		putc_elf(str[i]);
+		i++;
+	}
+}
+
+void puthex_elf(unsigned int val)
+{
+	/* 0x1234abcd */
+	int i;
+	int j;
+	
+	puts_elf("0x");
+
+	for (i = 0; i < 8; i++)
+	{
+		j = (val >> ((7-i)*4)) & 0xf;
+		if ((j >= 0) && (j <= 9))
+			putc_elf('0' + j);
+		else
+			putc_elf('A' + j - 0xa);
+		
+	}
+	
+}
+
+void delay(void)
+{
+	volatile unsigned int time=0xfffff;
+	while(time--)
+		;
+}
 
 void main()
 {
 
+	unsigned int sp = get_sp();
 	
+	puts_elf("sp_in main, ");
+	puthex_elf(sp);
+	puts_elf(tmp);
     int i = 0;
 	
     while(tmp[i]) {
@@ -70,24 +121,18 @@ void main()
         
 	while (!(UTRSTAT0 & TXD0READY));
     UTXH0 = '\r';
+
 	
+
 	while(1) {
 		delay();
-		int i = 0;
-		while(tmp[i]) {
-			while (!(UTRSTAT0 & TXD0READY));
-			UTXH0 = tmp[i];
-			i++;
-		}
+		puts_elf(tmp);
 	}
 
  
+ 
 }
 
-void delay(void)
-{
-	volatile unsigned int time=0xfffff;
-	while(time--);
-}
+
 
 

@@ -457,7 +457,7 @@ void *kmem_cache_alloc(struct kmem_cache *cache,unsigned int flag){
 
 
 #define KMALLOC_BIAS_SHIFT			(5)				//32byte minimal
-#define KMALLOC_MAX_SIZE			(4096)
+#define KMALLOC_MAX_SIZE			(8192)
 #define KMALLOC_MINIMAL_SIZE_BIAS	(1<<(KMALLOC_BIAS_SHIFT)) //32
 #define KMALLOC_CACHE_SIZE			(KMALLOC_MAX_SIZE/KMALLOC_MINIMAL_SIZE_BIAS) //128
 
@@ -479,7 +479,7 @@ int kmalloc_init(void){
 
 void *kmalloc(unsigned int size){
 	int index = kmalloc_cache_size_to_index(size);
-	pr_info("kmalloc index = %d\n", index);
+	//pr_info("kmalloc index = %d\n", index);
 	if(index >= KMALLOC_CACHE_SIZE)
 		return NULL;
 	return kmem_cache_alloc(&kmalloc_cache[index],0);

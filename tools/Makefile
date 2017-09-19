@@ -6,7 +6,7 @@ all: main.bin
 	cp rootfs.img ..
 
 main.bin: $(obj-y)
-		$(LD) -Ttext 0x30200000 -o main.elf $^
+		$(LD) -Tapp.lds -o main.elf $^
 		$(OBJCOPY) -O binary -S main.elf $@
 		$(OBJDUMP) -D -m arm main.elf > main.dis
 					

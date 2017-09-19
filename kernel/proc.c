@@ -16,23 +16,30 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see http://www.gnu.org/licenses/.
 */
 
+#include<kmalloc.h>
+#include<proc.h>
 
-struct task_info{
-	unsigned int sp;
-	struct task_info *next;
-};
 
-#define TASK_SIZE	8192
 
-struct task_info *current_task_info(void){
+
+struct task_info *current_task_info(void)
+{
 	register unsigned long sp asm ("sp");
+	printk("sp = %x\n", sp);
 	return (struct task_info *)(sp&~(TASK_SIZE-1));
 }
 
 #define current	current_task_info()
 
+//目前用户空间和内核空间用同一个堆栈
 int task_init(void){
-	current->next=current;
+	//struct task_info *addr = (struct task_info*)kmalloc(TASK_SIZE);
+	//printk("task_init,get task_info addr:%x\n",addr);
+	//unsigned int sp_t = ((unsigned int)addr + (TASK_SIZE-1));
+	//printk("task_init,get stack addr:%x\n",sp_t);
+	//set_sp(sp_t);
+	//printk("after set sp\n");
+	current->next = current;
 	return 0;
 }
 
@@ -40,10 +47,13 @@ int task_init(void){
 #define enable_schedule(x)	enable_irq()
 
 int task_stack_base=0x30300000;
-struct task_info *copy_task_info(struct task_info *tsk){
-	struct task_info *tmp=(struct task_info *)task_stack_base;
-	task_stack_base+=TASK_SIZE;
-	return tmp;
+struct task_info *copy_task_info(struct task_info *tsk)
+{
+	struct task_info *addr = (struct task_info*)kmalloc(TASK_SIZE);
+	unsigned int sp_t = ((unsigned int)addr + (TASK_SIZE-1));
+	//struct task_info *tmp=(struct task_info *)task_stack_base;
+	//task_stack_base+=TASK_SIZE;
+	return addr;
 }
 
 
@@ -61,19 +71,11 @@ struct task_info *copy_task_info(struct task_info *tsk){
 
 
 
-unsigned int get_cpsr(void){
-	unsigned int p;
-	asm volatile(
-		"mrs %0,cpsr\n"
-		:"=r"(p)
-		:
-	);
-	return p;
-}
 
-int do_fork(int (*f)(void *),void *args){
+int do_fork(int (*f)(void *), void *args)
+{
 	struct task_info *tsk,*tmp;
-	if((tsk=copy_task_info(current))==(void *)0)
+	if((tsk = copy_task_info(current))== (void *)0 )
 		return -1;
 
 	tsk->sp=((unsigned int)(tsk)+TASK_SIZE);
@@ -81,9 +83,9 @@ int do_fork(int (*f)(void *),void *args){
 	DO_INIT_SP(tsk->sp,f,args,0,0x1f&get_cpsr(),0);
 
 	disable_schedule();
-	tmp=current->next;
-	current->next=tsk;
-	tsk->next=tmp;
+	tmp = current->next;
+	current->next = tsk;
+	tsk->next = tmp;
 	enable_schedule();
 
 	return 0;

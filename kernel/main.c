@@ -68,6 +68,7 @@ int  test_process(void *p){
 int start_kernel()
 {
     unsigned char c;
+	
     int prev_new_line = 0;
     uart0_init();   // 波特率115200，8N1(8个数据位，无校验位，1个停止位)
 	disable_irq();
@@ -87,8 +88,11 @@ int start_kernel()
 	kmalloc_init();
 	format_ramdisk();
 	
+	//all init done, switch stack is safe
+	task_init();
 	
 	
+	//---------------test buddy-------------------------------
 	char *p1,*p2,*p3,*p4;
 	p1=(char *)get_free_pages(0,7);
 	pr_debug("the return address of get_free_pages %x\n",p1);
@@ -163,7 +167,8 @@ int start_kernel()
 
 	for(i = 0;i < ehdr->e_phnum; i++) {
 		if(CHECK_PT_TYPE_LOAD(phdr)) {
-			if(fs_type[ROMFS]->device->read(fs_type[ROMFS]->device,(char *)phdr->p_vaddr,fs_type[ROMFS]->get_daddr(node)+phdr->p_offset,phdr->p_filesz)<0) {
+			printk("read elf_header, va=%x, len=%x\n",(char *)phdr->p_vaddr, phdr->p_filesz);
+			if(fs_type[ROMFS]->device->read(fs_type[ROMFS]->device, (char *)phdr->p_vaddr, fs_type[ROMFS]->get_daddr(node)+phdr->p_offset,phdr->p_filesz)<0) {
 				printk("dout error\n");
 				goto HALT;
 			}
