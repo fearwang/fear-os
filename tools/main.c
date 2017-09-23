@@ -10,6 +10,8 @@ char *tmp = "this is main.elf\n\r";
 char *ret_str = "[main.elf] ret = ";
 char *malloc_str = "xfter syscall_malloc addr = ";
 
+
+
 void putc_elf(unsigned char c)
 {
 
@@ -121,7 +123,13 @@ void main()
         
 	while (!(UTRSTAT0 & TXD0READY));
     UTXH0 = '\r';
-
+	
+	unsigned int cpsr = get_cpsr();
+	
+	cpsr = cpsr & 0x1f;
+	
+	puts_elf("mode bit = ");
+	puthex_elf(cpsr);
 	
 
 	while(1) {

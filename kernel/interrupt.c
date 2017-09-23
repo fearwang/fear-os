@@ -49,7 +49,7 @@ int register_irq(irq_handler handler, int irq_num, int flag)
 
 int timer4_irq_handler(void *arg)
 {
-	//printk("timer4_irq_handler exec\n");
+	printk("timer4_irq_handler exec\n");
 }
 
 void enable_irq(void){

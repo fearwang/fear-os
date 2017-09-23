@@ -3,9 +3,11 @@
 void go_pc(unsigned int pc, unsigned int sp)
 {
 	asm volatile(
-		"mov sp,%1\n\t"
-		"mov pc,%0\n\t"
-		
+		"stmfd sp!, {%1}\n\t"
+		"ldmfd sp!, {r13}^\n\t"
+		"stmfd sp!, {%0}\n\t"
+		"msr spsr, #(0x80|0x40|0x10)\n\t"
+		"ldmfd sp!, {pc}^\n\t"	
 		:
 		:"r"(pc), "r"(sp)
 		:"r8"
