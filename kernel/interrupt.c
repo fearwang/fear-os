@@ -36,6 +36,11 @@ typedef int (*irq_handler)(void *arg);
 
 irq_handler  irq_handler_table[64];
 
+void debug_tmp()
+{
+	printk("after irq handler\n");
+}
+
 int register_irq(irq_handler handler, int irq_num, int flag)
 {
 	if(irq_handler_table[irq_num] != NULL) {

@@ -74,15 +74,15 @@ __vector_reserved:
 	nop
 	
 __vector_irq:		//中断发生的时候 硬件自动禁止中断
-	sub r14,r14,#4
+	sub r14,r14,#4	//中断返回地址
 	stmfd r13!,{r14}
-	mrs r14,spsr
+	mrs r14,spsr		//中断现场的cpsr
 	stmfd r13!,{r14}
 	
-	CHANGE_TO_SYS
-	stmfd r13!,{r0-r3}	//保存被调用者不会保存的寄存器 其他寄存器common_irq_handler函数会保存 所以这里不用保存
-	bl common_irq_handler
-	ldmfd r13!,{r0-r3}
+	CHANGE_TO_SVC
+	stmfd r13!,{r0-r12,lr}	//保存被调用者不会保存的寄存器 其他寄存器common_irq_handler函数会保存 所以这里不用保存
+	bl common_irq_handler			
+	ldmfd r13!,{r0-r12,lr}	//lr一定要入栈，因为如果svc模式发生中断 lr会被破坏
 	
 	CHANGE_TO_IRQ
 	ldmfd r13!,{r14}

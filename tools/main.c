@@ -7,6 +7,7 @@
 #define TXD0READY   (1<<2)
 #define RXD0READY   (1)
 char *tmp = "this is main.elf\n\r";
+char *loop = "this is main.elf loop cnt = ";
 char *ret_str = "[main.elf] ret = ";
 char *malloc_str = "xfter syscall_malloc addr = ";
 
@@ -55,7 +56,7 @@ void puthex_elf(unsigned int val)
 
 void delay(void)
 {
-	volatile unsigned int time=0xfffff;
+	volatile unsigned int time = 229320;
 	while(time--)
 		;
 }
@@ -64,12 +65,12 @@ void main()
 {
 
 	unsigned int sp = get_sp();
-	
 	puts_elf("sp_in main, ");
 	puthex_elf(sp);
-	puts_elf(tmp);
-    int i = 0;
-	
+	puts_elf("\n\r");
+    
+	int i = 0;
+	/*
     while(tmp[i]) {
         while (!(UTRSTAT0 & TXD0READY));
         UTXH0 = tmp[i];
@@ -99,9 +100,9 @@ void main()
     UTXH0 = '\r';
 	
 	
-	
+	*/
 	//------------------------------------
-	
+	/*
 	int test_array2[2],ret2;
 	test_array2[0] = 64;
 	test_array2[1] = 64;
@@ -120,21 +121,37 @@ void main()
 	
 	while (!(UTRSTAT0 & TXD0READY));
     UTXH0 = '\n';
-        
+       
 	while (!(UTRSTAT0 & TXD0READY));
     UTXH0 = '\r';
+	*/
 	
+	//--------------------------------------------------
 	unsigned int cpsr = get_cpsr();
-	
-	cpsr = cpsr & 0x1f;
-	
+	//cpsr = cpsr & 0x1f;
 	puts_elf("mode bit = ");
 	puthex_elf(cpsr);
+	puts_elf("\n\r");
 	
-
+	unsigned int cnt = 0;
 	while(1) {
+		
+		unsigned int sp = get_sp();
+		puts_elf("sp_in while(1), ");
+		puthex_elf(sp);
+		puts_elf(" : ");
+		
+		unsigned int cpsr = get_cpsr();
+		//cpsr = cpsr & 0x1f;
+		puts_elf("mode bit while(1), ");
+		puthex_elf(cpsr);
+		puts_elf(" : ");
+		
+		puts_elf(loop);
+		puthex_elf(cnt);
+		puts_elf("\n\r");
+		cnt++;
 		delay();
-		puts_elf(tmp);
 	}
 
  

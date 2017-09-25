@@ -1,12 +1,12 @@
 #include <proc.h>
-
+//"msr spsr, #(0x80|0x40|0x10)\n\t"
 void go_pc(unsigned int pc, unsigned int sp)
 {
 	asm volatile(
 		"stmfd sp!, {%1}\n\t"
 		"ldmfd sp!, {r13}^\n\t"
 		"stmfd sp!, {%0}\n\t"
-		"msr spsr, #(0x80|0x40|0x10)\n\t"
+		"msr spsr, #(0x40|0x10)\n\t"
 		"ldmfd sp!, {pc}^\n\t"	
 		:
 		:"r"(pc), "r"(sp)
