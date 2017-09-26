@@ -73,6 +73,7 @@ __vector_data_abort:
 __vector_reserved:
 	nop
 	
+//仿照内核的pt_regs结构 保存现场  r0-r15,spsr(低到高地址)
 __vector_irq:				   //中断发生的时候 硬件自动禁止中断
 	sub r14,r14,#4			   //中断返回地址
 	sub sp,sp,#12	
@@ -92,20 +93,20 @@ __vector_irq:				   //中断发生的时候 硬件自动禁止中断
 
 irq_from_user:
 	CHANGE_TO_SVC
-	sub sp,sp,#68			//指向r0的位置 最低端
+	sub   sp,sp,#68			//指向r0的位置 最低端
 	stmib sp,{r1-r12}		//ib, 留出 r0的位置  sp值不变
-	ldmia r0,{r4-r6}		//取出irq模式堆栈中保存的r6 = spsr r5 = lr r4 = r0
-	add   r0, sp, #64		//r0指向pc的位置
-	str  r4, [sp]			//r0入栈
-	stmia r0,{r4-r5}		//入栈pc,spsr
-	stmdb r0, {sp,lr}^		//保存usr模式下保存的lr sp  至此user模式下的context保存完毕
+	ldmia r0,{r4-r6}		//取出irq模式堆栈中保存的r6 = spsr r5 = lr r4 = r0   bug 1
+	add   r0,sp,#60		    //r0指向pc的位置  bug 2
+	str   r4,[sp]			//r0入栈
+	stmia r0,{r5-r6}		//入栈pc,spsr
+	stmdb r0,{sp,lr}^		//保存usr模式下保存的lr sp  至此user模式下的context保存完毕
 	bl common_irq_handler			
 	
 	
 ret_to_user_from_irq:
 	ldr    r1, [sp, #64]				//r1保存了pt_regs中的spsr，也就是发生中断时的CPSR 
     ldr    lr, [sp, #60]!    			//lr保存了PC值，同时sp移动到了pt_regs中PC的位置 
-    msr    spsr, r1 					//赋值给spsr，进行返回用户空间的准备 spsr_cxsf
+    msr    spsr_cxsf, r1 					//赋值给spsr，进行返回用户空间的准备 spsr_cxsf
 										//clrex                    @ clear the exclusive monitor 
     ldmdb  sp, {r0-lr}^ 				//将保存在内核栈上的数据保存到用户态的r0～r14寄存器 
     mov    r0, r0   					//NOP操作，ARMv5T之前的需要这个操作 
