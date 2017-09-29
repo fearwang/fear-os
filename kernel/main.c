@@ -8,6 +8,7 @@
 #include <kmalloc.h>
 #include <fs.h>
 #include <elf.h>
+#include <proc.h>
 
 
 char *hint  = "fear@jz2440$ ";
@@ -60,9 +61,21 @@ void delay(void){
 int  test_process(void *p){
 	while(1){
 		delay();
-		printk("test process %dth\n",(int)p);
+		printk("test process cpsr = %x, sp = %x\n",get_cpsr(), get_sp());
 	}
 	return 0;
+}
+
+void swapper_process()
+{
+	while(1){
+		unsigned int sp = get_sp();
+		unsigned int cpsr = get_cpsr();
+		static int cnt = 0;
+		
+		printk("swapper process %dth, sp=%x, cpsr=%x\n",cnt++,sp,cpsr);
+		delay();
+	}
 }
 
 int start_kernel()
@@ -86,10 +99,9 @@ int start_kernel()
 	romfs_init();
 	init_page_map();
 	kmalloc_init();
-	format_ramdisk();
+	//format_ramdisk();
 	
-	//all init done, switch stack is safe
-	task_init();
+	
 	
 	
 	//---------------test buddy-------------------------------
@@ -129,6 +141,7 @@ int start_kernel()
 	}*/
 	
 	//---------------------------test romfs------------------------
+	/*
 	char buf[1024];
 	//storage[RAMDISK]->read(storage[RAMDISK],buf,0,sizeof(buf));
 	//hexdump(buf, 1024);
@@ -140,9 +153,15 @@ int start_kernel()
 		printk("%c",buf[i]);
 	}
 	kfree(node);
+	*/
+	do_fork(test_process,(void *)0x1);
+	//do_fork(test_process,(void *)0x2);
+	
+	swapper_process();
 	
 	//-------------test elf-----------------------------------
 	//struct inode *node;
+	/*
 	struct elf32_phdr *phdr;
 	struct elf32_ehdr *ehdr;
 	int pos,dpos;
@@ -175,9 +194,11 @@ int start_kernel()
 			phdr++;
 		}
 	}
-
-	exec((unsigned int)(ehdr->e_entry));
-	printk("after exec, %x\n", ehdr->e_entry);
+	*/
+	//idle_task_thread_info();
+	//exec((unsigned int)(ehdr->e_entry));
+	//exec((unsigned int)(swapper_process));
+	//printk("after exec, %x\n", ehdr->e_entry);
 	
 	//switch_to_user_mode();
 	/*

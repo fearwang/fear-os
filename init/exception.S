@@ -10,6 +10,10 @@
 .equ MOD_MASK,0x1f
 
 
+.macro SCHED_NEEDED
+	bl schedule
+.endm
+
 .macro CHANGE_TO_SVC
     msr     cpsr_c,#(DISABLE_FIQ|DISABLE_IRQ|SVC_MOD)
 .endm
@@ -29,6 +33,7 @@
 .global	__vector_reserved
 .global	__vector_irq
 .global	__vector_fiq
+.global	ret_from_fork
 
 .text
 .code 32
@@ -100,10 +105,13 @@ irq_from_user:
 	str   r4,[sp]			//r0入栈
 	stmia r0,{r5-r6}		//入栈pc,spsr
 	stmdb r0,{sp,lr}^		//保存usr模式下保存的lr sp  至此user模式下的context保存完毕
+	//mov r0,sp
 	bl common_irq_handler			
 	
 	
 ret_to_user_from_irq:
+	bl schedule
+	bl print_ret_to_user_from_irq
 	ldr    r1, [sp, #64]				//r1保存了pt_regs中的spsr，也就是发生中断时的CPSR 
     ldr    lr, [sp, #60]!    			//lr保存了PC值，同时sp移动到了pt_regs中PC的位置 
     msr    spsr_cxsf, r1 					//赋值给spsr，进行返回用户空间的准备 spsr_cxsf
@@ -127,10 +135,22 @@ irq_from_svc:
 	bl common_irq_handler		
 	
 ret_to_svc_from_irq:
+	bl schedule
+	bl print_ret_to_svc_from_irq
 	ldr    r1, [sp, #64]			//r1保存了pt_regs中的spsr，也就是发生中断时的CPSR 
 	msr    spsr, r1					//将中断现场的cpsr值保存到spsr中，准备返回中断发生的现场 spsr_cxsf
     ldmia  sp, {r0-pc}^ 		    //这条指令是ldm异常返回指令，这条指令除了字面上的操作，
 	//千万不能写成ldmia  sp!, {r0-pc}^   至于这里为什么能r0-pc(包含sp)，可能指令中的sp只是提供了一个起始地址，因此寄存器列表中可以有sp,因为没有!,所以sp恢复成堆栈中保存的位置
+
+ret_from_fork:
+	ldr    r1, [sp, #64]			//r1保存了pt_regs中的spsr，也就是发生中断时的CPSR 
+	msr    spsr_cxsf, r1			//将中断现场的cpsr值保存到spsr中，准备返回中断发生的现场 spsr_cxsf
+	ldr    lr, [sp, #60]
+	
+	ldmia  sp, {r0-lr}^ 		    //这条指令是ldm异常返回指令，这条指令除了字面上的操作，
+	mov    r0, r0
+	add    sp, sp, #68
+	movs   pc, lr
 	
 __vector_fiq:
 	nop

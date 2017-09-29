@@ -1,8 +1,25 @@
 #ifndef __PROC_H__
 #define __PROC_H__
 
-struct task_info{
+struct cpu_context_save {
+	unsigned int r4;
+	unsigned int r5;
+	unsigned int r6;
+	unsigned int r7;
+	unsigned int r8;
+	unsigned int r9;
+	unsigned int r10;
+	unsigned int r11;
+	unsigned int r12;
 	unsigned int sp;
+	unsigned int lr;
+	//unsigned int pc;
+	unsigned int cpsr;
+};
+
+struct task_info{
+	//unsigned int sp;
+	struct cpu_context_save context_save;
 	struct task_info *next;
 };
 
@@ -32,19 +49,18 @@ static inline unsigned int get_sp(void)
 
 
 //根据arm c 调用准则 r0 = sp
-static inline unsigned int set_sp(unsigned int sp)
+static inline void set_sp(unsigned int sp)
 {
 	//printk("start of set sp\n");
 	//unsigned int p = sp;
 	asm volatile(
 		"mov sp, %0\n"
-		"stmfd sp!,{lr}\n"
+		
 		:		
 		:"r"(sp)
-		:"r1"
 	);
 	//printk("end of set sp\n");
-	return 0;
+	//return 0;
 }
 
 //根据arm c 调用准则 r0 = sp

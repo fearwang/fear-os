@@ -61,6 +61,7 @@ _clear_bss:
 	b	1b
 
 _main:
+	bl task_init
 	b start_kernel
 
 _bss_start_:.word   __bss_start__

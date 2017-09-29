@@ -28,6 +28,7 @@
 */
 
 #include <s3c24xx.h>
+#include <proc.h>
 
 #define NULL (void *)0
 #define TIMER4_IRQ_NUM 14
@@ -55,7 +56,8 @@ int register_irq(irq_handler handler, int irq_num, int flag)
 int timer4_irq_handler(void *arg)
 {
 	static int timer4_irq_cnt = 0;
-	printk("timer4_irq_handler exec, %d\n", timer4_irq_cnt++);
+	unsigned int sp = get_sp();
+	printk("timer4_irq_handler exec, %d; sp = %x\n", timer4_irq_cnt++, sp);
 }
 
 void enable_irq(void){
@@ -80,7 +82,10 @@ void umask_int(unsigned int offset){
 	INTMSK&=~(1<<offset);
 }
 
-void common_irq_handler(void){
+void common_irq_handler(){
+	//unsigned int sp_in = get_sp();
+	//unsigned int cpsr = get_cpsr();
+	//printk("common_irq_handler, sp = %x, cpsr=%x, sp_in=%x\n", sp,cpsr,sp_in);
 	unsigned int irq_num = INTOFFSET;
 	unsigned int tmp = (1 << INTOFFSET);
 	//printk("%d\t",INTOFFSET);
@@ -92,7 +97,17 @@ void common_irq_handler(void){
 	 */
 	//printk("interrupt occured\n\r");
 	irq_handler_table[irq_num](NULL);
-	disable_irq();
+	//disable_irq();
+}
+
+void print_ret_to_user_from_irq()
+{
+	printk("print_ret_to_user_from_irq\n");
+}
+
+void print_ret_to_svc_from_irq()
+{
+	printk("print_ret_to_svc_from_irq\n");
 }
 
 
