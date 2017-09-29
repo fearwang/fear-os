@@ -17,6 +17,7 @@ extern void enable_irq(void);
 extern void disable_irq(void);
 extern void umask_int(unsigned int offset);
 extern void nand_read(unsigned int addr, unsigned char *buf, unsigned int len);
+extern void kthread_daemon1(void* args);
 extern int romfs_init();
 
 void timer_init(void){
@@ -61,7 +62,7 @@ void delay(void){
 int  test_process(void *p){
 	while(1){
 		delay();
-		printk("test process cpsr = %x, sp = %x\n",get_cpsr(), get_sp());
+		printk("test user process cpsr = %x, sp = %x\n",get_cpsr(), get_sp());
 	}
 	return 0;
 }
@@ -155,6 +156,7 @@ int start_kernel()
 	kfree(node);
 	*/
 	do_fork(test_process,(void *)0x1);
+	kthread_create(kthread_daemon1, (void*)0x01);
 	//do_fork(test_process,(void *)0x2);
 	
 	swapper_process();
