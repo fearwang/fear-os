@@ -111,7 +111,7 @@ irq_from_user:
 	
 ret_to_user_from_irq:
 	bl schedule
-	bl print_ret_to_user_from_irq
+	//bl print_ret_to_user_from_irq
 	ldr    r1, [sp, #64]				//r1保存了pt_regs中的spsr，也就是发生中断时的CPSR 
     ldr    lr, [sp, #60]!    			//lr保存了PC值，同时sp移动到了pt_regs中PC的位置 
     msr    spsr_cxsf, r1 					//赋值给spsr，进行返回用户空间的准备 spsr_cxsf
@@ -136,7 +136,7 @@ irq_from_svc:
 	
 ret_to_svc_from_irq:
 	bl schedule
-	bl print_ret_to_svc_from_irq
+	//bl print_ret_to_svc_from_irq
 	ldr    r1, [sp, #64]			//r1保存了pt_regs中的spsr，也就是发生中断时的CPSR 
 	msr    spsr, r1					//将中断现场的cpsr值保存到spsr中，准备返回中断发生的现场 spsr_cxsf
     ldmia  sp, {r0-pc}^ 		    //这条指令是ldm异常返回指令，这条指令除了字面上的操作，

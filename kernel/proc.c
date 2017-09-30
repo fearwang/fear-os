@@ -1,5 +1,6 @@
 #include<kmalloc.h>
 #include<proc.h>
+#include<debug.h>
 
 
 struct task_info *current_task_info(void)
@@ -50,7 +51,7 @@ void kthread_daemon1(void* args)
 	struct task_info* next = current->next;
 	
 	while(1) {
-		printk("kthread_daemon1: sp = %x, cpsr = %x\n",get_sp(), get_cpsr());
+		pr_info("kthread_daemon1: sp = %x, cpsr = %x\n",get_sp(), get_cpsr());
 		volatile unsigned int time=0xffff;
 		while(time--);
 	}
@@ -61,13 +62,13 @@ int do_fork(int (*f)(void *), void *args)
 {
 	struct task_info *tsk,*tmp;
 	tsk = (struct task_info*)kmalloc(TASK_SIZE);//内核堆栈
-	printk("do_fork, tsk=%x\n",tsk);
+	pr_info("do_fork, tsk=%x\n",tsk);
 	if(tsk == 0)
 		return -1;
 	
 	void* user_sp = kmalloc(TASK_SIZE);		//user mode 堆栈
 	user_sp = (void*)((unsigned int)user_sp + (TASK_SIZE));
-	printk("do_fork, user_sp=%x\n",user_sp);
+	pr_info("do_fork, user_sp=%x\n",user_sp);
 	unsigned int kernel_stack = ((unsigned int)tsk+TASK_SIZE);
 
 	tsk->context_save.r4 = 0;
@@ -84,8 +85,8 @@ int do_fork(int (*f)(void *), void *args)
 	unsigned int *p = &ret_from_fork;
 	tsk->context_save.lr = (unsigned int)p;
 	tsk->context_save.cpsr = 0x53;
-	printk("tsk->context_save.lr = %x\n", tsk->context_save.lr);
-	printk("tsk->context_save.cpsr = %x\n", tsk->context_save.cpsr);
+	pr_info("tsk->context_save.lr = %x\n", tsk->context_save.lr);
+	pr_info("tsk->context_save.cpsr = %x\n", tsk->context_save.cpsr);
 	
 	DO_INIT_SP(kernel_stack, user_sp, f, args, 0, 0x50, 0);
 
@@ -102,7 +103,7 @@ int kthread_create(int (*f)(void *), void *args)
 {
 	struct task_info *tsk,*tmp;
 	tsk = (struct task_info*)kmalloc(TASK_SIZE);//内核堆栈
-	printk("do_fork, kernel tsk=%x\n",tsk);
+	pr_info("do_fork, kernel tsk=%x\n",tsk);
 	if(tsk == 0)
 		return -1;
 
@@ -119,8 +120,8 @@ int kthread_create(int (*f)(void *), void *args)
 	
 	tsk->context_save.lr = (unsigned int)f;
 	tsk->context_save.cpsr = 0x53;
-	printk("tsk->context_save.lr = %x\n", tsk->context_save.lr);
-	printk("tsk->context_save.cpsr = %x\n", tsk->context_save.cpsr);
+	pr_info("tsk->context_save.lr = %x\n", tsk->context_save.lr);
+	pr_info("tsk->context_save.cpsr = %x\n", tsk->context_save.cpsr);
 
 	disable_schedule();
 	tmp = current->next;		//task_info加入链表 合适的时机会发生context switch
@@ -158,7 +159,7 @@ void *__common_schedule(void){
 
 void context_switch(struct task_info* prev, struct task_info* next)
 {
-	printk("prev = %x, next = %x\n", prev, next);
+	pr_info("prev = %x, next = %x\n", prev, next);
 	switch_mm();
 	__asm_switch_to(prev, next);
 }
@@ -168,11 +169,11 @@ void schedule()
 	struct task_info* prev = current;
 	struct task_info* next = __common_schedule();
 	if((unsigned int)prev == (unsigned int)next) {
-		printk("schedule():next == prev \n");
+		pr_info("schedule():next == prev \n");
 		return;
 	}
 	
-	printk("before context_switch, sp = %x, cpsr = %x\n",get_sp(),get_cpsr());
+	pr_info("before context_switch, sp = %x, cpsr = %x\n",get_sp(),get_cpsr());
 	context_switch(prev, next);
-	printk("after context_switch, sp = %x, cpsr = %x\n",get_sp(),get_cpsr());
+	pr_info("after context_switch, sp = %x, cpsr = %x\n",get_sp(),get_cpsr());
 }

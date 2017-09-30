@@ -29,6 +29,7 @@
 
 #include <s3c24xx.h>
 #include <proc.h>
+#include <debug.h>
 
 #define NULL (void *)0
 #define TIMER4_IRQ_NUM 14
@@ -39,7 +40,7 @@ irq_handler  irq_handler_table[64];
 
 void debug_tmp()
 {
-	printk("after irq handler\n");
+	pr_info("after irq handler\n");
 }
 
 int register_irq(irq_handler handler, int irq_num, int flag)
@@ -102,12 +103,12 @@ void common_irq_handler(){
 
 void print_ret_to_user_from_irq()
 {
-	printk("print_ret_to_user_from_irq\n");
+	pr_info("print_ret_to_user_from_irq\n");
 }
 
 void print_ret_to_svc_from_irq()
 {
-	printk("print_ret_to_svc_from_irq\n");
+	pr_info("print_ret_to_svc_from_irq\n");
 }
 
 

@@ -22,18 +22,20 @@ extern int romfs_init();
 
 void timer_init(void){
 
-	TCFG0|=0xFE00;
-	TCFG1|=0x1000;
-	TCON&=(~(7<<20));
-	TCON|=(1<<22);
-	TCON|=(1<<21);
+	TCFG0|=0xFA00;		//prescaler
+	TCFG1|=0x30000;		//divider
+	TCNTB4=12500;  		//timer cnt , cnt-- = 0, timer inerrupt ocurr
+	
+	TCON&=(~(7<<20));	//clear bit 20-22 
+	TCON|=(1<<22);		//set bit 22
+	TCON|=(1<<21);		//set bit 21   update 	TCNTB4 to  
 
-	TCNTB4=50000;
+	
 
-	TCON|=(1<<20);
-	TCON&=~(1<<21);
+	TCON|=(1<<20);		//start timer 4
+	TCON&=~(1<<21);		//clear bit 21, when we at autoload mode
 
-	umask_int(14);
+	umask_int(14);		//umask timer4 interrupt
 	enable_irq();
 }
 
@@ -62,7 +64,15 @@ void delay(void){
 int  test_process(void *p){
 	while(1){
 		delay();
-		printk("test user process cpsr = %x, sp = %x\n",get_cpsr(), get_sp());
+		pr_info("test user process cpsr = %x, sp = %x\n",get_cpsr(), get_sp());
+	}
+	return 0;
+}
+
+int  test_process2(void *p){
+	while(1){
+		delay();
+		pr_info("test user process 2 cpsr = %x, sp = %x\n",get_cpsr(), get_sp());
 	}
 	return 0;
 }
@@ -74,7 +84,7 @@ void swapper_process()
 		unsigned int cpsr = get_cpsr();
 		static int cnt = 0;
 		
-		printk("swapper process %dth, sp=%x, cpsr=%x\n",cnt++,sp,cpsr);
+		pr_info("swapper process %dth, sp=%x, cpsr=%x\n",cnt++,sp,cpsr);
 		delay();
 	}
 }
@@ -102,10 +112,8 @@ int start_kernel()
 	kmalloc_init();
 	//format_ramdisk();
 	
-	
-	
-	
-	//---------------test buddy-------------------------------
+	//-------------------------------test buddy-------------------------------
+	/*
 	char *p1,*p2,*p3,*p4;
 	p1=(char *)get_free_pages(0,7);
 	pr_debug("the return address of get_free_pages %x\n",p1);
@@ -121,7 +129,7 @@ int start_kernel()
 	put_free_pages(p4,6);
 	put_free_pages(p3,6);
 	
-	/*
+	
 	p1=kmalloc(127);
 	pr_debug("the first alloced address is %x\n",p1);
 	p2=kmalloc(124);
@@ -134,14 +142,7 @@ int start_kernel()
 	pr_debug("the forth alloced address is %x\n",p4);
 	*/
 	
-	/*
-	char * p_ramdisk = (char*)(storage[RAMDISK]->start_pos);
-	for(i = 0; i < 128; i++) {
-		*p_ramdisk = i;
-		p_ramdisk++;
-	}*/
-	
-	//---------------------------test romfs------------------------
+	//-----------------------------------test romfs-------------------------------
 	/*
 	char buf[1024];
 	//storage[RAMDISK]->read(storage[RAMDISK],buf,0,sizeof(buf));
@@ -155,13 +156,8 @@ int start_kernel()
 	}
 	kfree(node);
 	*/
-	do_fork(test_process,(void *)0x1);
-	kthread_create(kthread_daemon1, (void*)0x01);
-	//do_fork(test_process,(void *)0x2);
-	
-	swapper_process();
-	
-	//-------------test elf-----------------------------------
+		
+	//-------------------------------test elf-----------------------------------
 	//struct inode *node;
 	/*
 	struct elf32_phdr *phdr;
@@ -197,21 +193,15 @@ int start_kernel()
 		}
 	}
 	*/
-	//idle_task_thread_info();
-	//exec((unsigned int)(ehdr->e_entry));
-	//exec((unsigned int)(swapper_process));
-	//printk("after exec, %x\n", ehdr->e_entry);
 	
-	//switch_to_user_mode();
-	/*
-	i=do_fork(test_process,(void *)0x1);
-	i=do_fork(test_process,(void *)0x2);
+	
+	//-----------------------------------process--------------------------------------
+	do_fork(test_process,(void *)0x1);
+	kthread_create(kthread_daemon1, (void*)0x01);
+	do_fork(test_process2,(void *)0x2);
+	
+	//swapper_process();
 
-	while(1){
-		delay();
-		printk("this is the idle process\n");
-	};
-	*/
 	printk("%s", hint);
     while(1)
     {
