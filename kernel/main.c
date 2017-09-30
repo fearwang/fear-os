@@ -24,7 +24,7 @@ void timer_init(void){
 
 	TCFG0|=0xFA00;		//prescaler
 	TCFG1|=0x30000;		//divider
-	TCNTB4=12500;  		//timer cnt , cnt-- = 0, timer inerrupt ocurr
+	TCNTB4=120;  		//timer cnt , cnt-- = 0, timer inerrupt ocurr  12500/1s
 	
 	TCON&=(~(7<<20));	//clear bit 20-22 
 	TCON|=(1<<22);		//set bit 22

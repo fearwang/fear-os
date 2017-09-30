@@ -58,7 +58,7 @@ int timer4_irq_handler(void *arg)
 {
 	static int timer4_irq_cnt = 0;
 	unsigned int sp = get_sp();
-	printk("timer4_irq_handler exec, %d; sp = %x\n", timer4_irq_cnt++, sp);
+	//printk("timer4_irq_handler exec, %d; sp = %x\n", timer4_irq_cnt++, sp);
 }
 
 void enable_irq(void){
